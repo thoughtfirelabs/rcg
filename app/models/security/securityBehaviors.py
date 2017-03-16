@@ -109,13 +109,8 @@ class Option(Defaults):
         
         self.option = True
         self.Delta.required = True ### Override
-        self.Delta.applicable = True ### Override
-        
         self.PXMult.required = True ### Override
         self.OptionUnderlyingPrice.required = True ### Override
-        self.OptionUnderlyingPrice.applicable = True ### Override
-        
-        self.PXMult.applicable = True
         self.PXMult.required = True
         
         self.Derivative.activate()
@@ -133,6 +128,14 @@ class Option(Defaults):
         if self.deltaNotionalValid:
             self.gross_delta_notional = np.abs(self.gross_notional * self.Delta.value)
             self.net_delta_notional = self.net_notional * self.Delta.value
+    
+    ### Override for Underlying Betas
+    def evaluateBeta(self):
+        if self.UnderlyingBetaMSCI.value != None and self.BetaMSCI.value == None and self.Delta.value != None:
+            self.BetaMSCI.value = self.Delta.value *  self.UnderlyingBetaMSCI.value
+        if self.UnderlyingBetaSP500.value != None and self.BetaSP500.value == None and self.Delta.value != None:
+            self.BetaSP500.value = self.Delta.value *  self.UnderlyingBetaSP500.value
+        return
     
     ### Validates Field to Determine Whether or Not It Is Needed - Makes Assumption if Not Needed
     ### If assumption made, the date associated with the field is the snapshot date of the portfolio.
@@ -200,13 +203,8 @@ class Future(Defaults):
         self.future = True
         
         self.Delta.required = True       
-        self.Delta.applicable = True
         self.Delta.value = 1.0
-        
         self.PXMult.required = True ### Override
-        self.PXMult.applicable = True
-        
-                
         
         self.Derivative.activate()
         self.RCGCustomInstrument.value = 'Derivatives'
@@ -229,7 +227,14 @@ class Future(Defaults):
             self.gross_custom_notional = self.gross_notional * self.Delta.value
             self.net_custom_notional = self.net_notional * self.Delta.value
         
-
+    ### Override for Underlying Betas
+    def evaluateBeta(self):
+        if self.UnderlyingBetaMSCI.value != None and self.BetaMSCI.value == None and self.Delta.value != None:
+            self.BetaMSCI.value = self.Delta.value *  self.UnderlyingBetaMSCI.value
+        if self.UnderlyingBetaSP500.value != None and self.BetaSP500.value == None and self.Delta.value != None:
+            self.BetaSP500.value = self.Delta.value *  self.UnderlyingBetaSP500.value
+        return
+    
     ### Validates Field to Determine Whether or Not It Is Needed - Makes Assumption if Not Needed
     ### If assumption made, the date associated with the field is the snapshot date of the portfolio.
     def validateDynamicFields(self):

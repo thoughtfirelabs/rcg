@@ -100,6 +100,21 @@ class ModelEvaluation:
         
         self.evaluateBeta()
         
+    
+    #    #######################################
+#    ### Calculate Volume and Determine Whether or Not Security is Liquid
+#    def evaluateLiquidity(self,fields):
+#
+#        if self.applicable:
+#
+#            if self.value != None:
+#                sevenDayVolume = 5.0 * self.value
+#                ### self.numContracts Represents Number of Shares of Bond Future
+#                if sevenDayVolume <= fields.numContracts:
+#                    self.illiquidFlag = True
+#        return
+#
+        
 ##############################################################
 ### Custom Security for RCG 40 Act Fund - All Cash Sleeeve
 class RCG40Act(Spot,Security,NoExposureSecurity,ModelEvaluation):
@@ -155,8 +170,6 @@ class TRSBondLeg(DurationDependent,NoExposureSecurity,Security,ModelEvaluation):
         
         self.BetaSP500.applicable = False
         self.BetaMSCI.applicable = False
-        self.BetaSP500.value = 0.0
-        self.BetaMSCI.value = 0.0
         
         ## Will force custom exposure to 0.0
         self.Duration.value = 0.0 

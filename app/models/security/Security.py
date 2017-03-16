@@ -4,69 +4,64 @@ from .UnderlyingSecurity import UnderlyingSecurity
 from .securityValidation import SecurityValidation
 import pandas as pd
 
+from .allFields import InstrumentType, SecurityName, SearchName, SSAssetClass, AssetClass, ISIN, SDL, CUSIP, PositionDesignation, MarketPrice, Quantity
+from .allFields import UnrealizedPL, SSMarketValue, NumContracts, Issuer, PXMult, Sector, Industry, RCGCustomAssetClass, RCGCustomInstrument,
+from .allFields import CountryOfRisk, CountryFullName, Country, MarketType, Region, RCGGeoBucket
+from .allFields import PortfolioName, PortfolioID, PortfolioStrategy, Duration, Delta, OptionUnderlyingPrice, BetaMSCI, BetaSP500, Liquidity
+from .allFields import WFCash, Restricted, Derivative, ETFFlag, IlliquidFlag, IndexFlag, ComdtyInterestFlag, FXFlag
+from .allFields import UnderlyingBetaMSCI, UnderlyingBetaSP500
+
 ################################################################################
 ### A single Missing Data Field for a security, can be fatal or non fatal, dynamic or static
 ### Nonfatal Data Fields can include an assumption
 class FieldDataRecord:
     def __init__(self, security, field):
 
-        self.id = None
         self.security = security
         self.field = field
-
-        self.dynamic = False
+        
+        self.raw = field.raw
+        self.dynamic = field.dynamic
         self.static = field.static
-
-        if not self.static:
-            self.dynamic = True
-
-    ###################################
-    ### Generates Unique ID for This Record to Keep Track of Duplicates
-    def generateRecordID(self):
+        
+        ### Generates Unique ID for This Record to Keep Track of Duplicates
         dateString = pd.to_datetime(self.security.snapshot_date).strftime("%Y_%m_%d")
         self.id = self.security.rcg_id + '_' + dateString + self.field.internalFieldName
-        return
-
-
-################################################################################
-### Missing Data Fields for Single security (i.e. assortment of fields associated with invalid
-### data points for a single security Object)
-class securityDataRecords:
-    def __init__(self):
-
-        self.missingDataRecords = []
-
-        self.missingUnderlyingRecords = []
-        self.missingProxyRecords = []
-
-        self.missingUnderlying = False
-        self.missingProxy = False
-        return
-
-
-### Defines default behavior for a base security inherited by each security model.
-### These behaviors and flags can be overridden in additional behavior objects.
-class DefaultBehaviors:
+        
+###############################################################################
+### Handles validation or invalidation of security fields.
+class SecurityValidation:
     
     def __init__(self):
         
-        self.proxy_rcg_id = None
-        self.underlying_rcg_id = None
-        
-        self.proxySecurity = None ## Default
-        self.underlyingSecurity = None  ## Default
-        
-        self.valid = True
+        self.valid = True ### More General
         self.customNotionalValid = True
         self.deltaNotionalValid = True
         
+        self.missingRecords = []
+        self.missingUnderlyingRecords = []
+        self.missingProxyRecords = []
         return
-
-from .allFields import InstrumentType, SecurityName, SearchName, SSAssetClass, AssetClass, ISIN, SDL, CUSIP, PositionDesignation, MarketPrice, Quantity
-from .allFields import UnrealizedPL, SSMarketValue, NumContracts, Issuer, PXMult, Sector, Industry, RCGCustomAssetClass, RCGCustomInstrument,
-from .allFields import CountryOfRisk, CountryFullName, Country, MarketType, Region, RCGGeoBucket
-from .allFields import PortfolioName, PortfolioID, PortfolioStrategy, Duration, Delta, OptionUnderlyingPrice, BetaMSCI, BetaSP500, Liquidity
-from .allFields import WFCash, Restricted, Derivative, ETFFlag, IlliquidFlag, IndexFlag, ComdtyInterestFlag, FXFlag
+        
+    ### Fatally Invalidates Field
+    def invalidateField(self,field):
+        newDataRecord = FieldDataRecord(self, field)
+        if newDataRecord.id not in [record.id for record in self.missingRecords]:
+            self.missingRecords.append(newDataRecord)
+        
+        self.customNotionalValid = False
+        if not field.DeltaNotionalSafe:
+            self.deltaNotionalValid = False
+        return
+    
+    ### Notes as a missing data record but doest not invalidate the security
+    ### so it can't be used.
+    def noteAssumption(self):
+        newDataRecord = FieldDataRecord(self, field)
+        if newDataRecord.id not in [record.id for record in self.missingRecords]:
+            self.missingRecords.append(newDataRecord)
+        return
+        
 
 class AllFields:
     def __init__(self):
@@ -120,7 +115,10 @@ class AllFields:
 
         self.BetaMSCI = BetaMSCI()
         self.BetaSP500 = BetaSP500()
-
+        
+        self.UnderlyingBetaMSCI = UnderlyingBetaMSCI()
+        self.UnderlyingBetaSP500 = UnderlyingBetaSP500()
+        
         self.Liquidity = Liquidity()
 
         ########### Flag Fields
@@ -140,7 +138,7 @@ class AllFields:
 ############################################################################################################################
 ### Fields object inherited by security object to allow all of the differetn security models to have control over their
 ### field designations, defaults and values.
-class Security(DefaultBehaviors,AllFields,securityDataRecords,SecurityValidation):
+class Security(AllFields,SecurityValidation):
     
     def __init__(self, rcg_id, snapshot_date, security_name, instrument_type, ss_asset_class, portfolioModel):
         
@@ -167,17 +165,30 @@ class Security(DefaultBehaviors,AllFields,securityDataRecords,SecurityValidation
         
         securityDataRecords.__init__(self)
         
+        self.proxy_rcg_id = None
+        self.underlying_rcg_id = None
+        
+        self.proxySecurity = None ## Default
+        self.underlyingSecurity = None  ## Default
+        
         #################### Dynamic Data
         self.crncy_adj_mkt_cap = None
         self.volatility_162w = None
 
         return
     
+    @property
+    def fieldList(self):
+        fields = []
+        for key, field in self.__dict__.items():
+            if isinstance(field,Field):
+                fields.append(field)
+        return fields
+    
     ### Validates the security based on the data provided by the models
     def validate(self):
-        for key, field in self.__dict__.items():
-            if isinstance(field,Field) and field.requiresValidation:
-                field.validate(self)
+        for field in self.fieldList:
+            field.validate(self)
                 
     ####### Outputs the Security Data in Dictionary Format
     def retrieveData(self):
@@ -207,6 +218,14 @@ class Security(DefaultBehaviors,AllFields,securityDataRecords,SecurityValidation
         ### Initialize Underlying Securities
         if self.underlyingStaticModel != None:
             self.underlyingSecurity = UnderlyingSecurity(underlyingStaticModel, underlyingDynamicModels)
+            
+        ## Explicit Underlying Beta Declaration
+        if self.underlyingSecurity != None and self.underlyingSecurity.BetaMSCI.value != None:
+            self.UnderlyingBetaMSCI.value = self.underlyingSecurity.BetaMSCI.value
+            
+        if self.underlyingSecurity != None and self.underlyingSecurity.BetaSP500.value != None:
+            self.UnderlyingBetaSP500.value = self.underlyingSecurity.BetaSP500.value
+            
         return
         
     def includeProxyData(self,proxyStaticModel=None,proxyDynamicModels=None):
@@ -234,30 +253,15 @@ class Security(DefaultBehaviors,AllFields,securityDataRecords,SecurityValidation
         ### Store Data to Possible Proxy Security and Underlying Security
         if self.proxySecurity != None:
             self.proxySecurity.setup()
+            self.proxySecurity.validate()
+            
         if self.underlyingSecurity != None:
             self.underlyingSecurity.setup()
+            self.underlyingSecurity.validate()
+            
+        for field in self.fieldList:
+            field.supplement()
 
-        ############ Setup Base Security Fields
-
-        ### (1) Supplement - Supplement missing data with possible data from proxy or underlyings first.
-        for field in self.staticFieldList:
-            if field.canSupplementWithProxy:
-                field.supplementWithProxy(self.proxySecurity,field)
-            if field.canSupplementWithUnderlying:
-                field.supplementWithUnderlying(self.underlyingSecurity,field)
-
-        for field in self.dynamicFieldList:
-            if field.canSupplementWithProxy:
-                field.supplementWithProxy(self.proxySecurity,field)
-            if field.canSupplementWithUnderlying:
-                field.supplementWithUnderlying(self.underlyingSecurity,field)
-
-        ### Finalize Supplement of Complicated Dynamic Fields.
-        self.BetaMSCI.finalize(self)
-        self.BetaSP500.finalize(self)
-        
-        
-        ### (2) Standardize and Classify Static Data
 
         ### Standardize Raw Data First
         self.Sector.standardize()

@@ -7,361 +7,269 @@ from app.fields.fieldExcelSafeStore import FieldExcelSafeStore
 from app.settings import settings
 
 
-##############################################
+############################################################################################
 ### All Flag Fields
 
 ##############################################
 class WFCash(FlagField):
 
-	internalFieldName = 'wf_cash'
-	### Alternates only apply to the data models and not the Bloomberg Data Pulls
-	alternates = ['wf_cash']
-	def __init__(self):
-		FlagField.__init__(self)
-		return
+    __name__ = 'WFCash'
+    internalFieldName = 'wf_cash'
+    def __init__(self):
+        FlagField.__init__(self)
+        return
 
 ##############################################
 class Restricted(FlagField):
 
-	internalFieldName = 'restricted'
-	alternates = ['restricted']
-	def __init__(self):
-		FlagField.__init__(self)
-		return
+    __name__ = 'Restricted'
+    internalFieldName = 'restricted'
+    def __init__(self):
+        FlagField.__init__(self)
+        return
 
 ##############################################
 class Derivative(FlagField):
 
-	internalFieldName = 'derivative'
-	alternates = ['derivative','derivative_flag','der_flag']
-	def __init__(self):
-		FlagField.__init__(self)
-		return
-  
+    __name__ = 'Derivative'
+    internalFieldName = 'derivative'
+    def __init__(self):
+        FlagField.__init__(self)
+        return
+
 ##############################################
 class ETFFlag(FlagField):
 
-	internalFieldName = 'etf_flag'
-	alternates = ['etf_flag','ETFFlag','ETF_Flag','etf']
-	def __init__(self):
-		FlagField.__init__(self)
-		return
-  
+    __name__ = 'ETFFlag'
+    internalFieldName = 'etf_flag'
+    def __init__(self):
+        FlagField.__init__(self)
+        return
+
 ##############################################
 class IndexFlag(FlagField):
 
-	internalFieldName = 'index_flag'
-	alternates = ['index_flag','index','IndexFlag','Index']
-	def __init__(self):
-		FlagField.__init__(self)
-		return
+    __name__ = 'IndexFlag'
+    internalFieldName = 'index_flag'
+    def __init__(self):
+        FlagField.__init__(self)
+        return
 
 ##############################################
 class IlliquidFlag(FlagField):
-
-	internalFieldName = 'illiquid'
-	alternates = ['illiquid','liquidity','liquid','illiquid_flag','liquid_flag']
-	def __init__(self):
-		FlagField.__init__(self)
-		return
+    
+    __name__ = 'IlliquidFlag'
+    internalFieldName = 'illiquid'
+    def __init__(self):
+        FlagField.__init__(self)
+        return
 
 ##############################################
 class FXFlag(FlagField):
-
-	internalFieldName = 'fx_flag'
-	alternates = ['FXFlag','fx_flag','fx flag']
-	def __init__(self):
-		FlagField.__init__(self)
-		return
+    
+    __name__ = 'FXFlag'
+    internalFieldName = 'fx_flag'
+    def __init__(self):
+        FlagField.__init__(self)
+        return
 
 ##############################################
 class ComdtyInterestFlag(FlagField):
     
-	internalFieldName = 'comdty_interest_instrument'
-	alternates = ['comdty_interest_instrument','comdty_interest_flag','commodity_interest_flag']
-	def __init__(self):
-		FlagField.__init__(self)
-		return
+    __name__ = 'ComdtyInterestFlag'
+    internalFieldName = 'comdty_interest_instrument'
+    def __init__(self):
+        FlagField.__init__(self)
+        return
 
 
-### Dynamic Field Default : Applicable and Required
 
-### Override if the field is not required for delta or custom notional calculations,
-### override if it is not a float type field and override if the field doesn't have 0.0 as an assumed/suppress value.
-### Override if field is not a raw field, or the field is not applicable (usually in security models)
+
+############################################################################################
+### Dynamic Fields
 
 ##############################################
-class SSMarketValue(DynamicField):
+class SSMarketValue(DynamicField,RawField):
     
-    bbFieldName = None
+    __name__ = 'SSMarketValue'
     internalFieldName = 'ss_market_val'
     modelFieldName = 'ss_market_val'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['ss_market_val', 'ss_market_value','market_val','market_value']
-
-    #############
+    
     def __init__(self):
-        self.assumptionValue = None
         DynamicField.__init__(self)
+        RawField.__init__(self)
         return
 
 ##############################################
-class UnrealizedPL(DynamicField):
+class UnrealizedPL(DynamicField,RawField):
 
-    bbFieldName = None
+    __name__ = 'UnrealizedPL'
     internalFieldName = 'unrealized_gains_losses'
     modelFieldName = 'unrealized_pl'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['unrealized_gains_losses', 'unrealized_pl']
 
-    #############
     def __init__(self):
-        self.assumptionValue = None
         DynamicField.__init__(self)
+        RawField.__init__(self)
         return
 
 ##############################################
-class Quantity(DynamicField):
+class Quantity(DynamicField,RawField):
 
-    bbFieldName = None
+    __name__ = 'Quantity'
     internalFieldName = 'quantity'
     modelFieldName = 'quantity'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['quantity']
 
-    #############
     def __init__(self):
-        self.assumptionValue = None
         DynamicField.__init__(self)
+        RawField.__init__(self)
         return
 
 ##############################################
-class MarketPrice(DynamicField):
+class MarketPrice(DynamicField,RawField):
 
-    bbFieldName = None
+    __name__ = 'MarketPrice'
     internalFieldName = 'market_price'
     modelFieldName = 'market_price'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['market_price', 'price', 'market_px']
 
-    #############
     def __init__(self):
-        self.assumptionValue = None
         DynamicField.__init__(self)
+        RawField.__init__(self)
         return
 
 ##############################################
-class BetaMSCI(DynamicField,ProxySupplement,UnderlyingSupplement):
-
-    bbFieldName = 'EQY_BETA_MSCI'
+### Default Assumption Value = 0.0
+class UnderlyingBetaMSCI(DynamicField):
+    
+    __name__ = 'UnderlyingBetaMSCI'
+    def __init__(self):
+        DynamicField.__init__(self)
+        self.canProxySupplement = True ## Override
+    
+##############################################
+### Default Assumption Value = 0.0
+class UnderlyingBetaSP500(DynamicField):
+    
+    __name__ = 'UnderlyingBetaSP500'
+    def __init__(self):
+        DynamicField.__init__(self)
+        self.canProxySupplement = True ## Override
+    
+##############################################
+### Default Assumption Value = 0.0
+class BetaMSCI(DynamicField,BloombergField):
+    
+    __name__ = 'BetaMSCI'
     internalFieldName = 'beta_msci'
     modelFieldName = 'beta_msci'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['beta_msci', 'EQY_BETA_MSCI']
 
-    #############
     def __init__(self):
         DynamicField.__init__(self)
-        ProxySupplement.__init__(self)
-        UnderlyingSupplement.__init__(self)
+        BloombergField.__init__(self)
         
-        self.assumptionValue = 0.0
+        self.canProxySupplement = True ## Override
         
+        self.bbFieldName = 'EQY_BETA_MSCI'
         self.required = False  ### Override
-        self.required_for_delta = False  ### Override
         return
-
-    ### Functions for Beta Fields Only - Try to combine delta and underlying beta if available
-    def finalize(self, fields):
-        if fields.Delta.value != None and self.underlyingBeta != None:
-            self.value = self.underlyingBeta * fields.Delta.value
-
-
+    
 
 ##############################################
-class BetaSP500(DynamicField,ProxySupplement,UnderlyingSupplement):
-
-    bbFieldName = 'EQY_BETA_SP'
+### Don't Allow These to be Directly Supplemented by Underlying - Only Proxy
+class BetaSP500(DynamicField,BloombergField):
+    
+    __name__ = 'BetaSP500'
     internalFieldName = 'beta_sp500'
     modelFieldName = 'beta_sp500'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['beta_sp500', 'EQY_BETA_SP', 'beta']
 
-    #############
     def __init__(self):
         DynamicField.__init__(self)
-        ProxySupplement.__init__(self)
-        UnderlyingSupplement.__init__(self)
+        BloombergField.__init__(self)
         
-        self.assumptionValue = 0.0
+        self.canProxySupplement = True ## Override
         
+        self.bbFieldName = 'EQY_BETA_SP'
         self.required = False  ### Override
-        self.required_for_delta = False  ### Override
         return
-
-    ### Functions for Beta Fields Only - Try to combine delta and underlying beta if available
-    def finalize(self,fields):
-        if fields.Delta.value != None and self.underlyingBeta != None:
-            self.value = self.underlyingBeta * fields.Delta.value
-
 
 
 ##############################################
-class Duration(DynamicField,ProxySupplement,UnderlyingSupplement):
-
+class Duration(DynamicField,BloombergField):
+    
+    __name__ = 'Duration'
     bbFieldName = 'DUR_MID'
     internalFieldName = 'duration'
     modelFieldName = 'duration'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['duration', 'dur', 'dur_mid', 'DUR_MID']
 
     #############
     def __init__(self):
 
         DynamicField.__init__(self)
-        ProxySupplement.__init__(self)
-        UnderlyingSupplement.__init__(self)
+        BloombergField.__init__(self)
+        
+        self.canProxySupplement = True ## Override
+        self.canUnderlyingSupplement = True ## Override
         
         self.assumptionValue = settings.ten_year_duration ### Override
-        
-        ### Override These Unless Model Specfies Otherwise
-        self.applicable = False
-        self.required_for_delta = False
-        self.required = False
-        
-        blah blah blah
         self.DeltaNotionalSafe = True
         return
 
-    #######################################
-    def supplement(self, fields, proxyFields, underlyingFields):
-
-        if proxyFields.Duration.value != None and self.value == None:
-            self.value = proxyFields.Duration.value
-
-        if underlyingFields.Duration.value != None and self.value == None:
-            self.value = underlyingFields.Duration.value
-        return
-
 
 ##############################################
-class Liquidity(DynamicField):
-
-    bbFieldName = 'VOLUME_AVG_30D'
+class Volume(DynamicField,BloombergField):
+    
+    __name__ = 'Volume'
     internalFieldName = 'volume_avg_30d'
     modelFieldName = 'volume_avg_30d'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['volume', 'volume_avg_30d', 'VOLUME_AVG_30D', 'liquidity']
-    assumptionValue = 'Liquid'  ### Assumption that seucrity is liquid
-    type = str
-    #############
+
     def __init__(self):
-        
         DynamicField.__init__(self)
-
-        self.illiquidFlag = False ### Default
-        self.value = None
-        
-        self.required = False  ### Override
-        self.required_for_delta = False  ### Override
+        BloombergField.__init__(self)
+        self.assumptionValue = 1000000000  # Override for Liquidity - Large Value Ensures Default is Liquid if Volume Not Founds
+        self.bbFieldName = 'VOLUME_AVG_30D'
         return
-
-    #######################################
-    ### Calculate Volume and Determine Whether or Not Security is Liquid
-    def setup(self,fields):
-
-        if self.applicable:
-
-            if self.value != None:
-                sevenDayVolume = 5.0 * self.value
-                ### self.numContracts Represents Number of Shares of Bond Future
-                if sevenDayVolume <= fields.numContracts:
-                    self.illiquidFlag = True
-        return
-
-    #######################################
-    def supplement(self, fields, proxyFields, underlyingFields):
-        if proxyFields.Volume.value != None and self.value == None:
-            self.value = proxyFields.Volume.value
-        return
-
 
 ##############################################
-class Delta(DynamicField,ProxySupplement):
-
-    bbFieldName = 'DELTA'
+class Delta(DynamicField,BloombergField,ProxySupplement):
+    
+    __name__ = 'Delta'
     internalFieldName = 'delta'
     modelFieldName = 'delta'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['delta', 'DELTA']
 
     #############
     def __init__(self):
         DynamicField.__init__(self)
+        BloombergField.__init__(self)
         ProxySupplement.__init__(self)
         
-        self.assumptionValue = 1.0 ### Override
+        self.assumptionValue = 1.0 ### Override - Equity Warrants Applicable Not Required
+        self.bbFieldName = 'DELTA'
         
-        ### Override These Unless Model Specfies Otherwise
-        self.applicable = False
-        self.required_for_delta = False
-        self.required = False
-        return
-
-    #######################################
-    def supplement(self, fields, proxyFields, underlyingFields):
-        if proxyFields.Delta.value != None and self.value == None:
-            self.value = proxyFields.Delta.value
         return
 
 
 ##############################################
-class OptionUnderlyingPrice(DynamicField):
-
-    bbFieldName = 'OPT_UNDL_PX'
+class OptionUnderlyingPrice(DynamicField,BloombergField):
+    
+    __name__ = 'OptionUnderlyingPrice'
     internalFieldName = 'option_underlying_price'
     modelFieldName = 'option_underlying_price'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['option_underlying_price', 'OPT_UNDL_PX', 'opt_undl_price', 'opt_underlying_price',
-                  'option_undl_price', 'opt_undl_px', 'option_undl_px',
-                  'option_underlying_px', 'opt_underlying_price']
-    
 
-    #############
     def __init__(self):
         DynamicField.__init__(self)
-        
-        self.assumptionValue = None ### Override
-        
-        ### Override These Unless Model Specfies Otherwise
-        self.applicable = False
-        self.required_for_delta = False
-        self.required = False
-        return
-
-    #######################################
-    def supplement(self, fields, proxyFields, underlyingFields):
-        if proxyFields.OptionUnderlyingPrice.value != None and self.value == None:
-            self.value = proxyFields.OptionUnderlyingPrice.value
+        BloombergField.__init__(self)
+        self.bbFieldName = 'OPT_UNDL_PX'
         return
 
 
-
-#### Almost all static fields are set to applicable and not required as default,
-#### this means that if they are missing the security will not be invalidated and an assumption
-#### value will be used.  PXMult is defaulted to required and applicable = False, but if this is set
-#### to required and applicable in the security model, it will be necessary for the security to not 
-### be invalidated.
-
-### If field is required - override, if field is not raw - override, if field is not applicable - override (in security
-### model).
+############################################################################################
+### Static Fields
 
 ### Subclass FieldSafeStore to safely store data to this field and let this field be stored in models
-class InstrumentType(RawField):
-
+class InstrumentType(RawField,StaticField):
+    
+    __name__ = 'InstrumentType'
     internalFieldName = 'instrument_type'
     modelFieldName = 'instrument_type'
-    alternates = ['instrument_type','InstrumentType','instrument']
     categorizationName = 'InstrumentType'
     
     def __init__(self):
@@ -379,12 +287,11 @@ class InstrumentType(RawField):
 
 ##############################################
 class SecurityName(RawField,StaticField):
-
+    
+    __name__ = 'SecurityName'
     internalFieldName = 'security_name'
     modelFieldName = 'security_name'
-    alternates = ['security_name', 'sec_name']
 
-    #############
     def __init__(self):
         StaticField.__init__(self)
         RawField.__init__(self)
@@ -392,12 +299,11 @@ class SecurityName(RawField,StaticField):
 
 ##############################################
 class SearchName(RawField,StaticField,ProxySupplement):
-
+    
+    __name__ = 'SearchName'
     internalFieldName = 'search_name'
     modelFieldName = 'search_name'
-    alternates = ['search_name']
 
-    #############
     def __init__(self):
         StaticField.__init__(self)
         RawField.__init__(self)
@@ -407,12 +313,11 @@ class SearchName(RawField,StaticField,ProxySupplement):
 
 ##############################################
 class PortfolioName(RawField,StaticField):
-
+    
+    __name__ = 'PortfolioName'
     internalFieldName = 'portfolio_name'
     categorizationName = 'PortfolioName'
-    alternates = ['portfolio_name', 'manager','PortfolioName']
 
-    #############
     def __init__(self): 
         StaticField.__init__(self)
         RawField.__init__(self)
@@ -426,12 +331,11 @@ class PortfolioName(RawField,StaticField):
         
 ##############################################
 class PortfolioID(RawField,StaticField):
-
+    
+    __name__ = 'PortfolioID'
     internalFieldName = 'portfolio_id'
     categorizationName = 'PortfolioID'
-    alternates = ['portfolio_id','port_id','PortfolioID']
 
-    #############
     def __init__(self): 
         StaticField.__init__(self)
         RawField.__init__(self)
@@ -445,12 +349,11 @@ class PortfolioID(RawField,StaticField):
         
 ##############################################
 class PortfolioStrategy(RawField,StaticField):
-
+    
+    __name__ = 'PortfolioStrategy'
     internalFieldName = 'strategy'
     categorizationName = 'PortfolioStrategy'
-    alternates = ['strategy', 'portfolio_strategy','manager_strategy','PortfolioStrategy']
 
-    #############
     def __init__(self): 
         StaticField.__init__(self)
         RawField.__init__(self)
@@ -464,67 +367,60 @@ class PortfolioStrategy(RawField,StaticField):
         
 ##############################################
 class ISIN(BloombergField,RawField,StaticField):
-
+    
+    __name__ = 'ISIN'
     internalFieldName = 'id_isin'
     modelFieldName = 'id_isin'
-    alternates = ['id_isin', 'isin', 'isn']
 
-    #############
     def __init__(self):
         StaticField.__init__(self)
         RawField.__init__(self)
         BloombergField.__init__(self)
         
         self.bbFieldName = 'id_isin'
-        self.ignore = True
+        self.ignore = True ### Override - won't make assumption or flag as missing.
         return
 
 ##############################################
 class CUSIP(BloombergField,RawField,StaticField):
-
+    
+    __name__ = 'CUSIP'
     internalFieldName = 'id_cusip'
     modelFieldName = 'id_cusip'
-    alternates = ['id_cusip', 'ssid', 'cusip','id_cusip']
 
-    #############
     def __init__(self):
         StaticField.__init__(self)
         RawField.__init__(self)
         BloombergField.__init__(self)
         
         self.bbFieldName = 'id_cusip'
-        self.ignore = True
+        self.ignore = True ### Override - won't make assumption or flag as missing.
         return
 
 
 ##############################################
 class SDL(BloombergField,RawField,StaticField):
-
-    bbFieldName = 'id_sedol1'
+    
+    __name__ = 'SDL'
     internalFieldName = 'id_sedol1'
     modelFieldName = 'ss_asset_class'
-
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['id_sedol1', 'id_sedol', 'sedol','sdl']
-
-    #############
+    
     def __init__(self):
         StaticField.__init__(self)
         RawField.__init__(self)
         BloombergField.__init__(self)
         
-        self.bbFieldName = 'id_isin'
-        self.ignore = True
+        self.bbFieldName = 'id_sedol1'
+        self.ignore = True ### Override - won't make assumption or flag as missing.
         return
 
 ##############################################
 class SSAssetClass(RawField,StaticField):
-
+    
+    __name__ = 'SSAssetClass'
     internalFieldName = 'ss_asset_class'
     modelFieldName = 'ss_asset_class'
-    alternates = ['ss_asset_class','SSAssetClass']
 
-    #############
     def __init__(self):
         StaticField.__init__(self)
         RawField.__init__(self)
@@ -532,13 +428,12 @@ class SSAssetClass(RawField,StaticField):
 
 ##############################################
 class AssetClass(BloombergField,RawField,StaticField):
-
+    
+    __name__ = 'AssetClass'
     internalFieldName = 'asset_class'
     modelFieldName = 'bpipe_reference_security_class'
     categorizationName = 'AssetClass'
-    alternates = ['asset_class','bpipe_reference_security_class','AssetClass']
 
-    #############
     def __init__(self):
         StaticField.__init__(self)
         RawField.__init__(self)
@@ -554,12 +449,11 @@ class AssetClass(BloombergField,RawField,StaticField):
 
 ##############################################
 class PositionDesignation(RawField,StaticField):
-
+    
+    __name__ = 'PositionDesignation'
     internalFieldName = 'position_designation'
     modelFieldName = 'position'
-    alternates = ['position_designation', 'position']
 
-    #############
     def __init__(self):
         StaticField.__init__(self)
         RawField.__init__(self)
@@ -567,20 +461,17 @@ class PositionDesignation(RawField,StaticField):
 
 ##############################################
 class PXMult(RawField,BloombergField,StaticField):
-
+    
+    __name__ = 'PXMult'
     internalFieldName = 'px_pos_mult_factor'
     modelFieldName = 'px_pos_mult_factor'
-    alternates = ['px_pos_mult_factor', 'px_mult', 'PXMult', 'position_multiplier', 'pos_multiplier', 'px_multiplier',
-                  'PX_POS_MULT_FACTOR']
 
-    #############
     def __init__(self):
         StaticField.__init__(self)
         RawField.__init__(self)
         BloombergField.__init__(self)
         
         self.type = float  ### Override
-        self.applicable = False ### Override
         self.bbFieldName = 'PX_POS_MULT_FACTOR' 
         return
 
@@ -593,12 +484,11 @@ class PXMult(RawField,BloombergField,StaticField):
 
 ##############################################
 class RCGCustomInstrument(DerivedField,StaticField):
-
+    
+    __name__ = 'RCGCustomInstrument'
     internalFieldName = 'rcgCustomInstrument'
     categorizationName = 'RCGCustomInstrument'
-    alternates = ['RCGCustomInstrument','rcgCustomInstrument']
 
-    #############
     def __init__(self):
         StaticField.__init__(self)
         DerivedField.__init__(self)
@@ -612,12 +502,11 @@ class RCGCustomInstrument(DerivedField,StaticField):
 
 ##############################################
 class RCGCustomAssetClass(DerivedField,StaticField):
-
+    
+    __name__ = 'RCGCustomAssetClass'
     internalFieldName = 'rcgCustomAssetClass'
     categorizationName = 'RCGCustomAssetClass'
-    alternates = ['RCGCustomAssetClass','rcgCustomAssetClass']
 
-    #############
     def __init__(self):
         StaticField.__init__(self)
         DerivedField.__init__(self)
@@ -631,25 +520,24 @@ class RCGCustomAssetClass(DerivedField,StaticField):
         
 ##############################################
 class NumContracts(DerivedField,StaticField):
-
+    
+    __name__ = 'NumContracts'
     internalFieldName = 'num_contracts'
-    alternates = ['num_contracts','numContracts']
-    assumptionValue = 1
 
-    #############
     def __init__(self):
         StaticField.__init__(self)
         DerivedField.__init__(self)
+        
+        self.assumptionValue = 1 ### Override
         return
 
 ##############################################
 class Issuer(RawField,StaticField,BloombergField,Suppressable):
-
+    
+    __name__ = 'Issuer'
     internalFieldName = 'issuer'
     modelFieldName = 'issuer'
-    alternates = ['issuer']
 
-    #############
     def __init__(self):
         StaticField.__init__(self)
         Suppressable.__init__(self)
@@ -661,28 +549,29 @@ class Issuer(RawField,StaticField,BloombergField,Suppressable):
 
 
 ##############################################
-class Sector(StaticField,Suppressable,ProxySupplement,Standardize,UnderlyingSupplement):
-
-    bbFieldName = 'GICS_SECTOR_NAME'
+class Sector(RawField,StaticField,BloombergField,Suppressable,Standardize):
+    
+    __name__ = 'Sector'
     internalFieldName = 'sector'
     modelFieldName = 'gics_sector_name'
-
     categorizationName = 'Sector'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['sector', 'gics_sector_name', 'GICS_SECTOR_NAME']
 
-    #############
     def __init__(self):
+        
         StaticField.__init__(self)
         Suppressable.__init__(self)
-        ProxySupplement.__init__(self)
-        Standardize.__init__(self)
-        UnderlyingSupplement.__init__(self)
+        RawField.__init__(self)
+        BloombergField.__init__(self)
         
+        self.canProxySupplement = True ## Override
+        self.canUnderlyingSupplement = True ## Override
+        
+        Standardize.__init__(self)
+
+        
+        self.bbFieldName = 'GICS_SECTOR_NAME'
         return
     
-    ### Category factor is a string  representing what we want to group the securities
-    ### by (i.e. market value, notional, etc.)
     @staticmethod
     def categorizeSecurities(securities):
         categorization = Sector.categorization
@@ -690,28 +579,26 @@ class Sector(StaticField,Suppressable,ProxySupplement,Standardize,UnderlyingSupp
         return categorization
         
 ##############################################
-class Industry(StaticField,Suppressable,ProxySupplement,UnderlyingSupplement):
-
-    bbFieldName = 'BICS_LEVEL_3_INDUSTRY_NAME'
+class Industry(RawField,StaticField,BloombergField,Suppressable,Standardize):
+    
+    __name__ = 'Industry'
     internalFieldName = 'industry'
     modelFieldName = 'bics_level_3_industry_name'
-
     categorizationName = 'Industry'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['bics_level_3_industry_name', 'industry', 'BICS_LEVEL_3_INDUSTRY_NAME']
 
-    #############
     def __init__(self):
 
         StaticField.__init__(self)
         Suppressable.__init__(self)
-        ProxySupplement.__init__(self)
-        UnderlyingSupplement.__init__(self)
-
+        RawField.__init__(self)
+        BloombergField.__init__(self)
+        
+        self.canProxySupplement = True ## Override
+        self.canUnderlyingSupplement = True ## Override
+        
+        self.bbFieldName = 'BICS_LEVEL_3_INDUSTRY_NAME'
         return
     
-    ### Category factor is a string  representing what we want to group the securities
-    ### by (i.e. market value, notional, etc.)
     @staticmethod
     def categorizeSecurities(securities):
         categorization = Industry.categorization
@@ -720,81 +607,58 @@ class Industry(StaticField,Suppressable,ProxySupplement,UnderlyingSupplement):
         
         
 ##############################################
-class CountryFullName(StaticField,Suppressable,Standardize):
-
-    bbFieldName = 'COUNTRY_FULL_NAME'
+class CountryFullName(RawField,StaticField,BloombergField,Suppressable,Standardize):
+    
+    __name__ = 'CountryFullName'
     internalFieldName = 'country_full_name'
     modelFieldName = 'country_full_name'
 
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['country_full_name']
-    assumptionValue = 'Other'
-    suppressionValue = 'Other'
-
-    #############
-    def __init__(self):
-        StaticField.__init__(self)
-        Suppressable.__init__(self)
-        Standardize.__init__(self)
-        return
-
-    #######################################
-    ### Called After Setup
-    def supplement(self, fields, proxyFields, underlyingFields):
-
-        if not self.suppressed:
-            if proxyFields.CountryFullName.value != None and self.value == None:
-                self.value = proxyFields.CountryFullName.value
-            if underlyingFields.CountryFullName.value != None and self.value == None:
-                self.value = proxyFields.CountryFullName.value
-        return
-    
-##############################################
-class CountryOfRisk(RawField,StaticField):
-
-    bbFieldName = 'CNTRY_OF_RISK'
-    internalFieldName = 'cntry_of_risk'
-    modelFieldName = 'cntry_of_risk'
-
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['cntry_of_risk']
-
-    #############
-    def __init__(self):
-        RawField.__init__(self)
-        StaticField.__init__(self)
-        return
-
-    #######################################
-    def supplement(self, fields, proxyFields, underlyingFields):
-
-        if proxyFields.CountryOfRisk.value != None and self.value == None:
-            self.value = proxyFields.CountryOfRisk.value
-        if underlyingFields.CountryOfRisk.value != None and self.value == None:
-            self.value = proxyFields.CountryOfRisk.value
-        return
-
-
-##############################################
-class Region(StaticField):
-
-    bbFieldName = None
-    internalFieldName = 'region'
-    modelFieldName = None
-
-    categorizationName = 'Region'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['region']
-
-    #############
     def __init__(self):
         
         StaticField.__init__(self)
-        self.rawField = False ### Override
+        Suppressable.__init__(self)
+        RawField.__init__(self)
+        BloombergField.__init__(self)
+        
+        self.canProxySupplement = True ## Override
+        self.canUnderlyingSupplement = True ## Override
+        
+        self.bbFieldName = 'COUNTRY_FULL_NAME'
         return
+
     
-    ### Category factor is a string  representing what we want to group the securities
-    ### by (i.e. market value, notional, etc.)
+##############################################
+class CountryOfRisk(RawField,StaticField,BloombergField,Suppressable,Standardize):
+    
+    __name__ = 'CountryOfRisk'
+    internalFieldName = 'cntry_of_risk'
+    modelFieldName = 'cntry_of_risk'
+
+    def __init__(self):
+        StaticField.__init__(self)
+        Suppressable.__init__(self)
+        RawField.__init__(self)
+        BloombergField.__init__(self)
+        
+        self.canProxySupplement = True ## Override
+        self.canUnderlyingSupplement = True ## Override
+        
+        self.bbFieldName = 'CNTRY_OF_RISK'
+        return
+
+
+##############################################
+class Region(DerivedField,StaticField):
+    
+    __name__ = 'Region'
+    internalFieldName = 'region'
+    categorizationName = 'Region'
+
+    def __init__(self):
+        DerivedField.__init__(self)
+        StaticField.__init__(self)
+        return
+
     @staticmethod
     def categorizeSecurities(securities):
         categorization = Region.categorization
@@ -802,24 +666,17 @@ class Region(StaticField):
         return categorization
         
 ##############################################
-class MarketType(StaticField):
-
-    bbFieldName = None
-    internalFieldName = 'market_tp'
-    modelFieldName = None
-
-    categorizationName = 'MarketType'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['market_type', 'market_tp','MarketType']
-
-    #############
-    def __init__(self):
-        StaticField.__init__(self)
-        self.rawField = False ### Override
-        return
+class MarketType(DerivedField,StaticField):
     
-    ### Category factor is a string  representing what we want to group the securities
-    ### by (i.e. market value, notional, etc.)
+    __name__ = 'MarketType'
+    internalFieldName = 'market_tp'
+    categorizationName = 'MarketType'
+
+    def __init__(self):
+        DerivedField.__init__(self)
+        StaticField.__init__(self)
+        return
+
     @staticmethod
     def categorizeSecurities(securities):
         categorization = MarketType.categorization
@@ -827,25 +684,17 @@ class MarketType(StaticField):
         return categorization
 
 ##############################################
-class RCGGeoBucket(StaticField):
-
-    bbFieldName = None
-    internalFieldName = 'rcg_geo_bucket'
-    modelFieldName = None
-
-    categorizationName = 'RCGGeoBucket'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['rcg_geo_bucket','rcg_bucket','RCGGeoBucket']
-
-    #############
-    def __init__(self):
-        
-        StaticField.__init__(self)
-        self.rawField = False
-        return
+class RCGGeoBucket(DerivedField,StaticField):
     
-    ### Category factor is a string  representing what we want to group the securities
-    ### by (i.e. market value, notional, etc.)
+    __name__ = 'RCGGeoBucket'
+    internalFieldName = 'rcg_geo_bucket'
+    categorizationName = 'RCGGeoBucket'
+
+    def __init__(self):
+        DerivedField.__init__(self)
+        StaticField.__init__(self)
+        return
+
     @staticmethod
     def categorizeSecurities(securities):
         categorization = RCGGeoBucket.categorization
@@ -853,25 +702,17 @@ class RCGGeoBucket(StaticField):
         return categorization
 
 ##############################################
-class Country(StaticField):
-
-    bbFieldName = None
+class Country(DerivedField,StaticField):
+    
+    __name__ = 'Country'
     internalFieldName = 'country'
-    modelFieldName = None
-
     categorizationName = 'Country'
-    ### Alternates only apply to the data models and not the Bloomberg Data Pulls
-    alternates = ['country']
 
-    #############
     def __init__(self):
-        
+        DerivedField.__init__(self)
         StaticField.__init__(self)
-        self.rawField = False
         return
 
-    ### Category factor is a string  representing what we want to group the securities
-    ### by (i.e. market value, notional, etc.)
     @staticmethod
     def categorizeSecurities(securities):
         categorization = Country.categorization
