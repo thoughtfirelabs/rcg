@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block logged_out %}
+
+<script type = "text/javascript">
+// Redirect User Back to Login Page
+$(document).ready(function(){
+	window.location.href = "/accounts/login/?next=/";
+})
+</script>
+
+{% endblock %}

@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block holding_level %} 
+
+{% block css %}
+{{block.super}}
+{% endblock %}
+
+{% block js %}
+{{block.super}}
+{% endblock %}
+
+<script type = "text/javascript">
+$(document).ready(function(){
+
+    $('#base_nav li.active').removeClass('active');
+    $('#holding_level_tab').addClass('active');
+
+    $('#workspace_warning').hide()
+    $('#workspace_success').hide()
+    $( "#snapshot_date" ).datepicker();
+
+    $('#table_content').hide()
+
+    hideDataAlerts()
+    loadPortfolios()
+
+    // Add Click Handler for Generating Report
+    $('#setWorkspace').on('click', function () {
+      setWorkspaceDate($('#snapshot_date').val(),function(port_id,port_name,fund_id,fund_name,snapshot_date,validity){
+
+          // Populate Workspace Data
+          populateWorkspaceData(port_id,port_name,snapshot_date,validity)
+
+          if(validity){
+              get_portfolio_holdings(function(holdings_content,holdings_exposure_content,error_data){
+                // Handle Error Report Data
+                //handle_data_report(error_data,true)
+                higlightPortfolioTable(port_id)
+                populateHoldingsData(holdings_content)
+              })
+          }
+      })
+    })
+    
+    /////////////////////////////
+    // Click Handlers for Portfolio Table
+    $("#port_table").delegate("tr", "click", function(){
+        $(this).parent().children().each(function() {
+            $(this).removeClass('row_selected')
+        });
+        $(this).addClass('row_selected')
+        var port_id = $('#port_table tr.row_selected').find("td:first").html();
+        
+        // Setworkspace Portfolio with Callback Function to Get Portfolio Overview
+        setWorkspacePortfolio(port_id,function(port_id,port_name,snapshot_date,validity){
+          // Populate Workspace Data
+          populateWorkspaceData(port_id,port_name,snapshot_date,validity)
+          if(validity){
+
+              get_portfolio_holdings(function(holdings_content,error_data){
+                // Handle Error Report Data
+                //handle_data_report(error_data,true)
+                higlightPortfolioTable(port_id)
+                populateHoldingsData(holdings_content)
+              })
+          }
+        })
+
+    });
+
+    // Default call on page load
+    // Get Workspace Portfolio and Populate Information After Data Passed Back in Callback
+    getWorkspace(function(port_id,port_name,snapshot_date,validity){
+        populateWorkspaceData(port_id,port_name,snapshot_date,validity)
+
+        // Get Portfolio Overview if Workspace is Valid
+        if(validity){
+          get_portfolio_holdings(function(holdings_content,holdings_exposure_content,error_data){
+                // Handle Error Report Data
+                //handle_data_report(error_data,true)
+                higlightPortfolioTable(port_id)
+                populateHoldingsData(holdings_content)
+          })
+        }
+    })
+
+
+})
+
+// Manually highlights a given row of the portfolio table based on the id
+function higlightPortfolioTable(port_id){
+  // Default Highlight Coresponding Row of Table
+  var foundIndex = 0
+
+  // Highlight Correspondign Element in Table
+  var table = $('#port_table').DataTable({"retrieve": true})
+  var data = table.rows().data();
+  data.each(function (value, index) {
+      if(value[0]==port_id){
+          foundIndex = index
+      }
+       
+  });
+  foundIndex=foundIndex+1
+  var row = $('#port_table tr').eq(foundIndex)
+  row.addClass('row_selected')
+}
+// Creates and Populates Holdings Tables with Data from API Response
+function populateHoldingsData(holdings_content){
+
+    //Draw Data Table
+    var table1Fields = ['security_name','search_name','instrument_type','position_designation','market_val','gross_custom_notional',
+                        'gross_delta_notional']
+    var dataTable = create_holdings_table("#holdings_table",holdings_content,table1Fields,20)
+    dataTable.draw()
+
+    var table2Fields = ['security_name','country','region','market_tp','sector','industry','issuer']
+    var dataTable2 = create_holdings_table("#holdings_table2",holdings_content,table2Fields,10)
+    dataTable2.draw()
+
+    $('#table_content').show()
+
+}
+//////////////////////////////////////////////////
+function populateWorkspaceData(port_id,port_name,snapshot_date,validity){
+
+    // Handle Workspace Response Data
+    document.getElementById("port_name_header").innerHTML = port_id + " - " + port_name
+    document.getElementById("selectedPortfolio").value = port_id
+
+    $('#snapshot_date').val(snapshot_date)
+    $('#selectedPortfolio').val(port_id)
+
+    if(validity){
+      animateWorkspaceSuccess()
+      return
+    }
+    else{
+      animateWorkspaceError()
+      handle_missing_data()
+      return
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+</script>
+
+<!-- ############################################ Set Workspace Region ############################################### -->
+<div class="row" style="position:relative; height:80px; left:20px; width:1300px;">
+
+    <div class="col-md-3"  style="position:relative; right:10px; width:300px; top:10px; float:left">
+         
+         <div class="row" style="position:relative; top:4px;">
+            <div class="col-md-6"><p>Selected Portfolio:</p></div>
+            <div class="col-md-6"><input readonly style="background-color:#FFFFFF" type="text" id="selectedPortfolio"></input></div>
+         </div>
+
+          <div class="row" style="position:relative; top:10px;">
+            <div class="col-md-6"><p>Select Date:</p></div>
+            <div class="col-md-6"><input readonly style="background-color:#FFFFFF" type="text" id="snapshot_date"></input></div>
+          </div>
+
+          <div class="row" style="position:relative; top:20px;">
+              <button style="position:relative; left:5px; float:right; bottom:4px;" class="btn btn-small btn-primary" id="setWorkspace">Set Workspace</button>
+          </div>
+    </div>
+
+    <!-- ################## -->
+    <div class="col-md-6" style="position:relative; top:15px; left:150px; width:600px;">
+        <div id="workspace_warning" class="alert alert-danger alert_style" role="alert">
+          <a href="#" class="alert-link"></a>
+        </div>
+        <div id="workspace_success" class="alert alert-success alert_style" role="alert">
+          <a href="#" class="alert-link"></a>
+        </div>
+    </div>
+
+</div>
+
+<!-- ################################################### Portfolio Table Regiom ################################################### -->
+<div class="row" style="position:relative; left:30px; width:980px; top:30px;">
+        <table class="dataTable cell-border display compact" id="port_table">
+           <thead>
+                <tr>
+                    <th style="width:60px;">Portfolio ID</th>
+                    <th style="width:200px;">Portfolio Name</th>
+                    <th style="width:150px;">Strategy</th>
+                    <th>Description</th>
+                    <th>Fund ID</th>
+                    <th style="width:200px;">Fund Name</th>
+                </tr>
+            </thead>
+            <tbody id="port_table_body">
+            </tbody>
+        </table>  
+</div>
+
+<div id="table_content" class="row" style="position:relative; top:50px; height:80px; left:30px; width:1300px;">
+
+    <h5 id="port_name_header"> Not Loaded </h5>
+
+
+    <!-- ################################################### Holdings Table Region ################################################### -->
+    <div class="row" style="position:relative; width:1100px; height:320px; top:10px; left:20px;">
+
+          <div style="position:relative; top:10px; width:1100px;">
+              <table style="font-size:0.8em" class="dataTable cell-border display compact table_medium" id="holdings_table" >
+                 <thead>
+                      <tr>
+                          <th style="width:60px;">RCG ID</th>
+                          <th style="width:270px;">Security Name</th>
+                          <th style="width:100px;">Search Name</th>
+                          <th style="width:100px;">Instrument</th>
+                          <th style="width:50px;">Position</th>
+                          <th style="width:110px;">Market Value</th>
+                          <th style="width:130px;">Gross Custom Not.</th>
+                          <th style="width:130px;">Gross Delta Not.</th>
+                      </tr>
+                  </thead>
+                  <tbody id="holdings_table_body">
+                  </tbody>
+              </table>    
+          </div>
+    </div> 
+
+
+    <!-- ################################################### Holdings Table 2 Region ################################################### -->
+    <div class="row" style="position:relative; width:1100px; height:320px; top:25px; left:20px;">
+
+          <div style="position:relative; top:10px; width:1100px;">
+              <table style="font-size:0.8em" class="dataTable cell-border display compact table_medium" id="holdings_table2" >
+                 <thead>
+                      <tr>
+                          <th style="width:60px;">RCG ID</th>
+                          <th style="width:270px;">Security Name</th>
+
+                          <th style="width:100px;">Country</th>
+                          <th style="width:100px;">Region</th>
+                          <th style="width:120px;">Market Type</th>
+                          <th style="width:120px;">Sector</th>
+                          <th style="width:120px;">Industry</th>
+                          <th>Issuer</th>
+
+                      </tr>
+                  </thead>
+                  <tbody id="holdings_table2_body">
+                  </tbody>
+              </table>    
+          </div>
+    </div> 
+
+</div> 
+
+
+
+{% endblock %}

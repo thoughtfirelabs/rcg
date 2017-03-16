@@ -1,0 +1,319 @@
+
+<script type = "text/javascript">
+////////////////////////////
+$(document).ready(function(){
+
+    $('#specific_exposure_div').hide();
+    $('#overview_exposure_div').hide();
+    hideDataAlerts()
+
+    // Assign Click Handlers for Exposure Type Radios
+    var exposureRadios = ['#Overview_radio']
+    var deprecatedRadios = ['#Long_radio','#Net_radio','#Short_radio','#Gross_radio']
+    for(var i = 0; i<exposureRadios.length; i++){
+        assignExposureChangeHandler(i)
+    }
+    for(var i = 0; i<deprecatedRadios.length; i++){
+        assignDeprecatedExposureChangeHandler(i)
+    }
+
+    function assignDeprecatedExposureChangeHandler(i){
+        var deprecatedRadios = ['#Long_radio','#Net_radio','#Short_radio','#Gross_radio']
+        $(deprecatedRadios[i]).on("click",function(){ 
+            alert('Deprecated for the time being.')
+        })
+    }
+
+    // Click Handler for Exposure Types
+    function assignExposureChangeHandler(i){
+        var exposureRadios = ['#Overview_radio']
+        $(exposureRadios[i]).on("click",function(){ 
+            $('input[type="radio"]:checked').prop('checked', false)
+            // Parse String to Get Input Name
+            var radioName = exposureRadios[i].split('_')[0]
+            $(radioName).prop('checked', true)
+            delegateTable()  
+        })
+    }
+
+
+    // Toggle Handler for Checkbox
+    $('input.exposure_type_check').on('change', function() {
+        $("#loading").show();
+        $('input.exposure_type_check').not(this).prop('checked', false);  
+        delegateTable()  
+    });
+
+
+   // Add Click Handler for Workspace
+    $('#setWorkspace').on('click', function () {
+      setWorkspaceDate($('#snapshot_date').val(),function(port_id,port_name,fund_id,fund_name,snapshot_date,validity){
+          populateWorkspaceData(fund_id,fund_name,snapshot_date,validity) // Populate Workspace Data
+          if(validity){
+              delegateTable()
+          }
+      })
+    })
+
+    //////////////////////////////////////////////////
+    // Default call on page load - workspace data and table delegation can be done asynchornously 
+    // since we are not setting/updating the workspace.
+    getWorkspace(function(port_id,port_name,fund_id,fund_name,snapshot_date,validity){
+        populateWorkspaceData(fund_id,fund_name,snapshot_date,validity)
+    })
+    delegateTable() // Get Portfolio Overview if Workspace is Valid
+})
+
+
+///////////////////////////////////////////////////////////////////////////////
+function delegate_table(exposure_type,region_type){
+
+  var region_type = document.querySelector('input[type = "checkbox"]:checked').id;
+  var exposure_type = $('input[type="radio"]:checked').attr('id')
+
+  if(exposure_type=='Overview'){
+
+        $('#specific_exposure_div').hide();
+        get_fund_overview_exposure(exposure_for,function(overview_data,error_data){
+            handle_data_report(error_data,true)
+            populateOverviewExposureData(overview_data)
+            $('#overview_exposure_div').show();
+            $("#loading").hide();
+        })
+  }
+  else{
+        // To Do: Improve asynchronous method for getting this data - deprecating the specific exposures
+        $("#specific_exposure_div").hide() // Temporary
+        $("#loading").hide();
+        $('#overview_exposure_div').hide();
+        // This function will be kept locally for the time being since the categories it usees
+        // require knowledge of what page we are on.
+        //get_specific_portfolio_exposure(exposure_type,function(){
+        //})
+  }
+
+}
+
+</script>
+
+
+<!-- ################################################### General Region ################################################### -->
+<h5 style="position:relative; top:5px;" id="fund_name_header"> fund Name </h5>
+
+<div class="row" style="width:1200px; height:30px;">
+
+    <!-- ################################################### Long Short Radios ################################################### -->
+    <div class="col-md-5" id="long_short" style="position:relative; top:10px;" class="btn-group" data-toggle="buttons">
+        <label class="btn btn-outline-danger btn-sm active" id="Overview_radio">
+            <input type="radio" id="Overview" checked>Overview
+        </label>
+        <label class="btn btn-outline-primary btn-sm" id="Gross_radio">
+            <input type="radio" id="Gross">Gross Exposure
+        </label>
+        <label class="btn btn-outline-info btn-sm" id="Long_radio">
+            <input type="radio" id="Long">Long Exposure
+        </label>
+        <label class="btn btn-outline-warning btn-sm" id="Short_radio">
+             <input type="radio" id="Short">Short Exposure
+        </label>
+        <label class="btn btn-outline-success btn-sm" id="Net_radio">
+            <input type="radio" id="Net">Net Exposure
+        </label>
+    </div>
+
+</div>
+
+
+<!-- ################################################### Missing Data Column ################################################### -->
+<div id='missing_data_region' style="position:absolute; width:600px; left:540px; top:20px;">
+
+    <!-- ################## -->
+    <div class="row" style="width:560px;">
+        <div id="data_warning" class="alert alert-danger alert_style" role="alert">
+          <a href="#" class="alert-link"></a>
+        </div>
+    </div>
+
+    <!-- ################## -->
+    <div class="row" style="width:560px;">
+        <div id="data_success" class="alert alert-success alert_style" role="alert">
+          <a href="#" class="alert-link"></a>
+        </div>
+    </div>
+    <!-- ################## -->
+    <div class="row" style="width:560px;">
+        <div id="definitions_success" class="alert alert-success alert_style" role="alert">
+          <a href="#" class="alert-link"></a>
+        </div>
+    </div>
+    <!-- ################## -->
+    <div class="row" style="width:560px;">
+        <div id="definitions_warning" class="alert alert-warning alert_style" role="alert">
+          <a href="#" class="alert-link"></a>
+        </div>
+    </div>
+    <!-- ################## -->
+    <div class="row" style="width:560px;">
+        <div id="assumptions_success" class="alert alert-success alert_style" role="alert">
+          <a href="#" class="alert-link"></a>
+        </div>
+    </div>
+    <!-- ################## -->
+    <div class="row" style="width:560px;">
+        <div id="assumptions_warning" class="alert alert-warning alert_style" role="alert">
+          <a href="#" class="alert-link"></a>
+        </div>
+    </div>
+
+</div>
+
+
+<!-- ################################################### Specific Exposure Area Area ################################################### -->
+<div class="row" id="specific_exposure_div" style="width:1300px; position:relative; left:10px; top:40px; ">
+
+    <!-- ########## Column 1  ################ -->
+    <div class="col-md-4" style="width:480px;">
+
+            <!-- ########################## -->
+            <div class="row">
+
+                <h5 style="position:relative; color:black; left:5px; top:5px;" class="alternate"> Sector Exposure </h5>
+                <div style="position:relative; top:10px;">
+                        <table class="dataTable cell-border display compact" id="exposure_table1" >
+                           <thead>
+                                <tr>
+                                    <th style="width:140px;">Sector</th>
+                                    <th>Num Positions</th>
+                                    <th style="width:120px;">Gross Notional Exposure</th>
+                                    <th>% of NAV</th>
+                                </tr>
+                            </thead>
+                            <tbody id="exposure_table_body">
+                            </tbody>
+                        </table>    
+                </div>
+            </div>
+
+            <!-- ########################## -->
+            <div class="row" style="position:relative; top:20px;">
+
+                <h5 style="position:relative; color:black; left:5px; top:5px;" class="alternate"> Industry Exposure </h5>
+                <div style="position:relative; top:10px;">
+                        <table class="dataTable cell-border display compact" id="exposure_table2" >
+                           <thead>
+                                <tr>
+                                    <th style="width:140px;">Industry</th>
+                                    <th>Num Positions</th>
+                                    <th style="width:120px;">Gross Notional Exposure</th>
+                                    <th>% of NAV</th>
+                                </tr>
+                            </thead>
+                            <tbody id="exposure_table_body2">
+                            </tbody>
+                        </table>    
+                </div>
+            </div>
+
+    </div>
+
+    <!-- ########## Column 2  ################ -->
+    <div class="col-md-4" style="width:400px;">
+
+            <div class="row" align="center" id='chart1'>
+                <svg class="nvd" style="position:relative; height:360px; width:360px;"> </svg>
+            </div>
+
+            <div class="row" style="position:relative; top:20px;">
+                <div id="legend1">
+                    <svg class="nvd_small" style="position:relative; height:600px; width:420px;"> </svg>
+                </div>
+            </div>
+
+    </div>
+   <!-- ########## Column 3  ################ -->
+   <div class="col-md-4" style="width:400px;">
+            <div class="row" align="center" id='chart2'>
+                <svg class="nvd" style="position:relative; height:360px; width:360px;"> </svg>
+            </div>
+
+            <div class="row" style="position:relative; top:20px;" align="center">
+                <div id="legend2">
+                    <svg class="nvd_small" style="position:relative; height:600px; width:420px;"> </svg>
+                </div>
+            </div>
+    </div>
+</div>
+<!-- ################################################### End Specific Exposure Area Area ################################################### -->
+        
+
+<!-- ################################################### Overview Region ################################################### -->
+
+<div class="row" id="overview_exposure_div" style="width:1200px; height:1000px; position:relative; left:20px; top:10px;">
+
+    <!-- ################################################### Overview Table Region ################################################### -->
+    <div class="row" style="position:relative; width:900px; max-height:400px; top:10px;">
+    
+         <div class="col-lg-8" style="font-family: 'Roboto', sans-serif; font-size:10px; font-weight: bold;">
+            <input class="exposure_type_check" type="checkbox" id="sector" name="Sector">Exposure By Sector<br>
+            <input class="exposure_type_check" type="checkbox" id="industry" name="Industry" checked> Exposure By Industry<br>
+        </div>
+    </div>
+
+    <!-- ################################## -->
+    <div class="row" style="position:relative; width:900px; max-height:400px; left:20px; top:30px;">
+                    
+        <table class="dataTable cell-border display compact" id="overview_exposure_table1">
+            <thead>
+                <tr>
+                    <th>Industry/Sector</th>
+                    <th>Number of Positions</th>
+                    <th>Market Value</th>
+                    <th>Gross Exposure</th>
+                    <th>% of Total Gross Exposure</th>
+                </tr>
+            </thead>
+            <tbody id="exposure_table_body">
+            </tbody>
+
+        </table>    
+    </div>
+    <!-- ################################################### Polar Chart Region ################################################### -->
+    <div class="row" style="position:relative; width:1000px; max-height:500px; top:10px;">
+        <div class="col-lg-5" align="center" style="position:relative; left:10px; width:400px;">
+            <div align="center" style="width:100%;" id='overview_chart'>
+                <svg class="nvd" style='height:400px;width:400px'> </svg>
+            </div>
+        </div>
+        <div class="col-lg-7" align="center" style="position:relative; left:10px; top:50px; width:600px;">
+            <div align="center" style="width:100%;" id='overview_legend'>
+                <svg class="nvd" style="height:400px; width:600px;"> </svg>
+            </div>
+        </div> 
+
+    </div> 
+    <!-- ################################## -->
+    <div class="row" style="position:relative; width:900px; max-height:400px; top:-30px; left:20px;">
+        <table class="dataTable cell-border display compact" id="overview_exposure_table2">
+            <thead>
+                <tr>
+                    <th>Industry/Sector</th>
+                    <th>Gross Exposure</th>
+                    <th>% NAV</th>
+                    <th>Long Exposure</th>
+                    <th>% NAV</th>
+                    <th>Short Exposure</th>
+                    <th>% NAV</th>
+                    <th>Net Exposure</th>
+                    <th>% NAV</th>
+                </tr>
+            </thead>
+            <tbody id="exposure_table_body">
+            </tbody>
+
+        </table>    
+    </div>
+    <!-- ################################## -->
+
+
+</div>
+<!-- ################################################### End Overview Region ################################################### -->

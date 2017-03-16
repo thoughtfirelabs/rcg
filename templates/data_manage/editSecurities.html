@@ -1,0 +1,178 @@
+<script type = "text/javascript">
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+$(document).ready(function(){
+
+    $('#editSecuritiesTable').addClass('hidden')
+    
+    //////////////////////////////////////////////////////////////////////////////
+    // Click Handlers for Portfolio Table
+    $("#editSecuritiesTable").delegate("tr", "click", function(){
+        $(this).parent().children().each(function() {
+            $(this).removeClass('row_selected')
+        });
+        $(this).addClass('row_selected')
+        var sec_id = $('#editSecuritiesTable tr.row_selected').find("td:first").html();
+        $('#selectedSecurityID').val(sec_id)
+    })
+    //////////////////////////////////////////////////////////////////////////////
+    // Hide/Show Table Toggle
+    $('#hide_showSecurities').on('click', function () {
+        $('#editSecuritiesTable').toggle()
+        $('#editSecuritiesFields').toggle()
+    })
+
+    ////////////////// Editing Actions on Edit Security Table /////////////////////
+    $('#addProxyToSecurity').on('click', function () {
+        var sec_id = $('#editSecuritiesTable tr.row_selected').find("td:first").html();
+        if(typeof(sec_id) != "undefined"){
+          addProxy(sec_id)
+        }
+    })
+    //////////////////////////////////////////////////////////////////////////////
+    // Edit Security in Table Button
+    $('#editSecurity').on('click', function () {
+        var sec_id = $('#editSecuritiesTable tr.row_selected').find("td:first").html();
+        if(typeof(sec_id) != "undefined"){
+          editSecurity(sec_id)
+        }
+    })
+    //////////////////////////////////////////////////////////////////////////////
+    $('#removeSecurity').on('click', function () {
+      var sec_id = $('#editSecuritiesTable tr.row_selected').find("td:first").html();
+        if(typeof(sec_id) != "undefined"){
+            answer = confirm('Are you sure you would like to remove security '+String(sec_id)+' from the database?')
+            if(answer){
+
+                removeSecurity(sec_id,function(responseMessage){
+                  if(responseMessage){
+                    alert('Successful Delete')
+                  }
+                })
+
+            }
+        }
+    })
+
+    // Retrieve All Securities in Static DB ///////////////////////////////////////
+    retrieveAllSecurities(function(securityData){
+        // Draw Edit Securities Table
+        desired_fields = ['id_isin', 'security_name', 'search_name', 'instrument_type','country_full_name','cntry_of_risk','gics_sector_name','bics_level_3_industry_name','underlying_search_name','proxy_search_name']
+        table = create_all_securities_table('#editSecurityTable', securityData, desired_fields,30)
+        table.draw()
+    })
+    //////////////////////////////////////////////////////////////////////////////
+})
+
+</script>
+
+<!-- ################################################### Edit Securities Region ################################################### -->
+<div class="row" style="position:relative; left:15px; width:100%; margin-left:-10px; top:15px; min-height:150px;">
+
+        <div class="row">
+            <div class="col-md-2" style="height:55px;">
+                  <!-- ####### Visible Part of Row for Showing/Hiding Table and Fields/Buttons ####### -->
+                  <h2 style="font-size:16px">Edit Securities<span style="color:#b92429">.</span></h2>
+            </div>
+
+            <div class="col-md-1" style="height:55px;">
+                  <button id="hide_showSecurities" style="position:relative; top:0px; width:80px; height:20px;"> Hide/Show </button>
+            </div>
+
+        </div>
+
+
+         <div class="row" style="position:relative; margin-left:-10px; width:1200px; top:15px;">
+
+            <!-- ####### Fields/Buttons Can Be Hidden ####### -->
+            <div class="col-md-12" style="float:right">
+
+                    <div class = "row hidden" style="position:relative; top:-20px;" id="editSecuritiesFields">
+
+                        <!-- ######################################################## -->
+                        <div class="col-sm-2" >
+                              <div class="row">
+                                      <button disabled class="btn btn-secondary" id="addSecurity" style="position:relative; top:-10px; width:140px; height:40px;">     
+                                            <div class="row">  
+                                                <div class="col-md-3">        
+                                                    <div id="imagebtn_container" style="position:relative; bottom:4px;"><img src="/static/img/AddIcon.jpg" width="30" height="30"/></div>
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <span style="position:relative; left:-8px; top:6px;">Add New</span>
+                                                </div>
+                                            </div>
+                                       </button>
+                                   </div>
+
+                        </div>
+
+                        <!-- ######################################################## -->
+                        <div class="col-sm-4" style="position:relative; left:500px;" >
+                              <div class="row">
+                                  <div class="col-md-4"><p>Security ID:</p></div>
+                                  <div class="col-md-8" style="position:relative; bottom:4px;"><input readonly style="background-color:#FFFFFF" type="text" id="selectedSecurityID"></input></div>
+                              </div>
+                        </div>
+
+                        <div class="col-sm-6" style="position:relative; left:400px;">
+                          <div class = "row">
+                              <div class="col-sm-3" style="position:relative; bottom:8px; width:100px;">
+                                    <button id="editSecurity" style="position:relative; top:5px; width:80px; height:20px;"> Edit </button>
+                              </div>
+
+                              <div class="col-sm-3" style="position:relative; bottom:8px; width:100px;">
+                                    <button id="addUnderlyingToSecurity" data-toggle="modal" data-target="#addUnderlyingModal" style="position:relative; top:5px; width:120px; height:20px;"> Add Underlying </button>
+                              </div>
+
+                              <div class="col-sm-3" style="position:relative; bottom:8px; left:35px; width:100px;">
+                                    <button id="addProxyToSecurity" data-toggle="modal" data-target="#addProxyModal" style="position:relative; top:5px; width:120px; height:20px;"> Add Proxy </button>
+                              </div>
+                              <div class="col-sm-3" style="position:relative; bottom:8px; left:70px; width:100px;">
+                                    <button id="removeSecurity" data-toggle="modal" data-target="#addProxyModal" style="position:relative; top:5px; width:120px; height:20px;"> Delete </button>
+                              </div>
+                            </div>
+                          </div>
+
+                    </div>
+
+
+             </div>
+      </div>
+
+</div>
+
+
+
+<!-- ################################################### Edit Securities Region Table ################################################### -->
+
+<!-- ####### Table - Can Be Hidden ####### -->
+<div class = "row hidden" id="editSecuritiesTable" style="position:relative; left:30px; margin-bottom:50px; width: 1500px; top:20px;">
+
+    <table class="dataTable cell-border display" id="editSecurityTable">
+           <thead>
+                <tr>
+
+                    <th style="width:40px;">RCG ID</th>
+                    <th style="width:40px;">ISIN</th>
+                    <th>Security Name</th>
+                    <th style="width:130px;">Ticker</th>
+                    <th style="width:100px;">Instrument Type</th>
+
+                    <th style="width:130px;">Country</th>
+                    <th style="width:130px;">Cntry. of Risk</th>
+                    <th style="width:130px;">Sector</th>
+                    <th style="width:130px;">Industry</th>
+
+                    <th style="width:130px;">Undl Ticker</th>
+                    <th style="width:130px;">Proxy Ticker</th>
+
+                </tr>
+            </thead>
+            <tbody class="twoLineRows" id="editSecurityTableBody">
+            </tbody>
+    </table>  
+
+</div>
+
+<!-- ################################################### Edit Securities Region End ################################################### -->

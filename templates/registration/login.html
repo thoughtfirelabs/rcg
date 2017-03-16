@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block login %}
+
+<script type = "text/javascript">
+
+$(document).ready(function(){
+    $('#loading').hide();
+    $('#authenticatedUserIndicator').hide()
+
+    $('.message a').click(function(){
+      $('form').animate({height: "toggle", opacity: "toggle"}, "slow");
+    });
+
+})
+
+</script>
+
+<div class="login-page">
+
+  <div class="form">
+
+    <!-- ############################## -->
+    <form class="login-form" method="post" action="{% url 'login' %}">
+      {% csrf_token %}
+      {{form.as_p}}
+
+      <button>login</button>
+
+        <div class = "row">
+            {% if next %}
+                {% if user.is_authenticated %}
+                    <p class="message">Your account doesn't have access to this page. </p>
+                    <p class="message"> Please contact application administrator if you wish to gain access. </p>
+                {% else %}
+                    <p class="message">Please login to see this page.</p>
+                {% endif %}
+            {% endif %}
+
+            {% if form.errors %}
+                  <p class="message">Your username and password didn't match. Please try again.</p>
+            {% endif %}
+        </div>
+
+    </form>
+
+</div>
+
+
+<!--  -->
+
+{% endblock %}

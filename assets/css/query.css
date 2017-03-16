@@ -1,0 +1,45 @@
+.query-text{
+	min-width: 100%;
+	max-width: 100%;
+}
+.view-details{
+	cursor:pointer;
+	color:#6B90DA;
+}
+
+.load-query{
+	cursor:pointer;
+	color:#6B90DA;
+}
+.edit-query{
+	cursor:pointer;
+	color:#6B90DA;
+}
+.delete-query{
+	cursor:pointer;
+	color:#6B90DA;
+}
+.copy-link{
+}
+
+.load-schema{
+	cursor:pointer;
+	color:#6B90DA;
+}
+
+.rhs{
+	max-height: 400px;
+	overflow-y: scroll;
+}
+
+table.security-master-table{
+  display: block;
+  height: 500px;
+  font-size: 70%;
+  overflow-y: scroll;
+}
+
+
+.highlighted {
+  background-color: #33b5e5;
+}

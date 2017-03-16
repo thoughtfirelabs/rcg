@@ -1,0 +1,199 @@
+<script type = "text/javascript">
+
+$(document).ajaxStart(function() {
+    $('#loading').show();
+}).ajaxStop(function() {
+    $('#loading').hide();
+})
+///////////////////////////////////////////
+$(document).ready(function(){
+
+    $('#data_warning').hide()
+    $('#manager_specific_limits').hide()
+
+    $('#all_numbers_radio').addClass('disabled');
+    $('#all_constraints_radio').addClass('disabled');
+    $('#all_numbers_radio').prop('disabled', true);
+    $('#all_constraints_radio').prop('disabled', true);
+
+    load_fund_portfolios()
+
+    ///////////////////////////////////
+    // Toggle Handler for Checkboxes for Showing Numbers
+    $('#all_numbers_radio').on("click",function(){ 
+
+        $('input[type="radio"]:checked').attr('checked', false)
+        $('#all_numbers_radio').attr('checked', true)
+        $('div.all_numbers_div').show()
+        $('div.constraint_numbers_div').hide()
+    });
+    $('#all_constraints_radio').on("click",function(){ 
+
+        $('input[type="radio"]:checked').attr('checked', false)
+        $('#all_constraints_radio').attr('checked', true)
+        $('div.constraint_numbers_div').show()
+        $('div.all_numbers_div').hide()
+    });
+
+    /////////////////////////////
+    // Click Handlers for Portfolio Table
+    $("#port_table").delegate("tr", "click", function(){
+        $(this).parent().children().each(function() {
+            $(this).removeClass('row_selected')
+        });
+        $(this).addClass('row_selected')
+        var port_id = $('#port_table tr.row_selected').find("td:first").html();
+        var port_name = $('#port_table tr.row_selected').find("td:nth-child(2)").html();
+        update_portfolio_id_browser_memory(port_id,port_name)
+
+        // Show Detailed Manager Report for Corresponding Selected Manager/Portfolio
+        show_manager_report()
+    });
+
+    sync_snapshot_date()
+    sync_fund()
+})
+///////////////////////////////////////////////////////////////////////////////////////
+// Load Portfolios for Selected Fund and Populate Table
+function load_fund_portfolios(){
+
+    var fund_id = localStorage.getItem("fund_id")
+    ////////////////////////
+    $.ajax({
+        url:'/load_fund_portfolios/',
+         type: "get",
+         data: {'fund_id':fund_id},
+         success: function(response) {
+            portfolios = JSON.parse(response)['portfolios']
+            dataTable = create_portfolio_table('#port_table',portfolios)
+            dataTable.draw()
+            //sync_portfolio()
+        }
+    })
+}
+///////////////////////////////////////////////////////////////////////////////
+// Parses Data Report and Outputs Information Summarizing the Missing Securities for Given Portfolio
+function handle_data_report(error_data){
+
+    num_removed_securities = error_data
+    if (num_removed_securities > 0){
+      $('#data_warning a').html("Error : Missing data for "+String(num_removed_securities)+" securities.  Calculated numbers shown are not calculated using these missing securities, and thus are not correct.")
+      $('#data_warning').show()
+    }
+    else{
+      $('#data_warning').hide()
+    }
+}
+////////////////////////////////////////////////////////
+function show_manager_report(){
+
+    var snapshot_date = localStorage.getItem("snapshot_date")
+    var port_id = localStorage.getItem("port_id")
+
+    $.ajax({
+        url:'generate_single_manager_limit_report/',
+         type: "get",
+         data: {'port_id':port_id, 'snapshot_date':snapshot_date},
+         success: function(response) {
+
+            report_content = JSON.parse(response)['report_content']
+
+            if (report_content == 'Error'){
+              $('#workspace_warning').html("Error : Portfolio and Date are invalid.  There is no holdings data for the selected Workspace Date and Portfolio.")
+              $('#workspace_warning').show()
+              $('#workspace_success').hide()
+              //handle_missing_data()
+              return
+            }
+            else{
+              $('#workspace_success').html("Valid Portfolio and Date Set.")
+              $('#workspace_success').show()
+              $('#workspace_warning').hide()
+            }
+
+            /// Data for Handling Errors and Missing Securities
+            var error_data = JSON.parse(response)['num_removed_securities']
+            handle_data_report(error_data)
+
+            // Handling Other Data from Report
+            var guideline_names = report_content['guideline_names']
+            var constraints = report_content['constraints']
+            var constraint_evaluation = report_content['constraint_evaluation'] // Boolean Results for Passing Constraints
+            var applicable_numbers = report_content['constraint_table_data'] // Numbers Only Relevant to Constraints
+            var all_numbers = report_content['all_numbers_table_data'] // All Numbers
+            
+            var dataTables = create_manager_limit_report_tables(guideline_names, applicable_numbers, all_numbers, constraint_evaluation, constraints)
+            var applicableDT = dataTables[0]
+            applicableDT.draw()
+
+            $('#manager_specific_limits').show()
+         }
+      })
+}
+</script>
+<div id = "limitReportContent">
+    
+<!-- ################################################### General Region ################################################### -->
+<h5 style="position:relative; top:5px;" id="fund_name_header"> Fund Name </h5>
+
+<!-- ################################################### Options and Warnings ################################################### -->
+<div class="row" style="position:relative; left:20px; width:1200px; height:50px;">
+
+    <div class="col-md-4" style="position:relative; top:10px;">
+        
+        <div class="row" id="long_short"  class="btn-group" data-toggle="buttons">
+            <label class="btn btn-outline-danger btn-sm" id="all_numbers_radio">
+                <input type="radio" id="all_numbers">Show All Values
+            </label>
+            <label class="btn btn-outline-primary btn-sm active" id="all_constraints_radio">
+                <input type="radio" id="all_constraints" checked>Only Show Values with Relevant Constraints
+            </label>
+        </div>
+
+    </div>
+
+    <!-- ################## -->
+    <div class="col-md-8" style="position:relative; top:10px; left:-30px; width:800px;">
+        <div id="data_warning" class="alert alert-warning alert_style" role="alert">
+          <a href="#" class="alert-link"></a>
+        </div>
+    </div>
+</div>
+
+<!-- ################################################### Portfolio Table Regiom ################################################### -->
+<div class="row" style="position:relative; left:30px; width:980px; top:10px;">
+        <table class="dataTable cell-border display compact" id="port_table">
+           <thead>
+                <tr>
+                    <th style="width:60px;">Manager ID</th>
+                    <th style="width:200px;">Manager Name</th>
+                    <th style="width:150px;">Strategy</th>
+                    <th>Description</th>
+                    <th>Fund ID</th>
+                    <th style="width:200px;">Fund Name</th>
+                </tr>
+            </thead>
+            <tbody id="port_table_body">
+            </tbody>
+        </table>  
+</div>
+
+<!-- ################################################### Table Region ################################################### -->
+<div class="row" id="manager_specific_limits" style="position:relative; left:30px; width:980px; top:30px;">
+        <table class="dataTable cell-border display compact" id="table_applicable_constraints">
+            <thead>
+                <tr>
+                    <th style="width:320px;">Guideline</th>
+                    <th>Applicable</th>
+                    <th>Constraint</th>
+                    <th>Value</th>
+                    <th>Constraint Met?</th>
+                </tr>
+            </thead>
+            <tbody id="table_applicable_constraints_body">
+            </tbody>
+        </table>    
+    </div>
+</div>
+
+</div>

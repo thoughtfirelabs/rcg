@@ -1,0 +1,522 @@
+.nvd {
+  font-family: 'RobotoCondensed', sans-serif;
+  font-size:10px !important;
+  font-style: normal;
+  padding: 2px 2px 2px 2px; 
+}
+
+hr { 
+  border: 0;
+  border-top: 1px solid #989898 ; 
+  color: solid #989898 ;
+  margin: 1em 0;
+  padding: 0; 
+  height: 0.01px;
+  opacity:0.5;
+}
+
+.modalHeader {
+  margin-top: 0;
+  margin-bottom: .5rem;
+  color:#778899;
+  font-weight: 500;
+  font-size:11px;
+}
+
+.modalTitle {
+  margin-top: 0;
+  margin-bottom: .5rem;
+  color:#778899;
+  font-weight: 600;
+  font-size:13px;
+  
+}
+
+.nopadding {
+   padding: 0 !important;
+   margin: 0 !important;
+}
+
+.suppressButton {
+  float:right; 
+  font-color: blue; 
+  font-size: 13px; 
+  background:none; 
+  border:none;
+  margin:0;
+  padding:0;
+}
+
+#loginDiv {
+    position:fixed;
+    top: 50%;
+    left: 50%;
+    width:50%;
+    height:50%;
+    margin-top: 25%; /*set to a negative number 1/2 of your height*/
+    margin-left: 25%; /*set to a negative number 1/2 of your width*/
+    border: 1px solid #ccc;
+    background-color: #f3f3f3;
+}
+
+
+
+.imagebtn
+{
+
+    position: relative;
+    width: 200px;
+    height: 60px;
+    margin-bottom:20px;
+    padding: 0 10px;
+    text-align: left;
+
+    font-size: 16px;
+    color: #333;
+    background:gray;
+}
+
+
+.nvd_small {
+  font-family: 'RobotoCondensed', sans-serif;
+  font-size:8px !important;
+  font-style: normal;
+  padding: 1px 1px 1px 1px; 
+}
+
+.table_small {
+  font-family: 'RobotoCondensed', sans-serif;
+  font-size:8px !important;
+  font-style: normal;
+  padding: 1px 1px 1px 1px; 
+}
+
+.table_medium{
+  font-family: 'RobotoCondensed', sans-serif;
+  font-size:9px !important;
+  font-style: normal;
+  padding: 1px 1px 1px 1px; 
+}
+
+.alert_style {
+  font-family: 'RobotoCondensed', sans-serif;
+  font-size:10px !important;
+  font-style: bold;
+  padding: 2px 2px 2px 2px; 
+}
+
+
+.dataTables_wrapper {
+    font-family: 'RobotoCondensed', sans-serif;
+    font-size:10px !important;
+    font-weight: normal;
+    padding: 2px 2px 2px 2px; 
+}
+
+div.bordered_section{
+
+  -moz-border-radius: 10px;
+  -webkit-border-radius: 10px;
+  border-radius: 4px; /* future proofing */
+  -khtml-border-radius: 10px; /* for old Konqueror browsers */
+
+  border-style:groove;
+  border: 2px solid #3c4296 ;
+  background-color : #ffffff !important;
+  padding:0px; 
+  margin:0px
+}
+
+tr.row_selected td{
+  background-color : #33b5e5 !important;
+}
+.dataTable thead,
+.dataTable th {text-align: center;}
+
+tr.row_selected_light td{
+  background-color : #deeff5 !important;
+}
+.btn-small {
+    padding: 5px 7px;
+    font-size: 12px;
+    line-height: normal;
+    -webkit-border-radius: 2px;
+       -moz-border-radius: 2px;
+            border-radius: 2px;
+    }
+
+
+thead, th {text-align: center;}
+.twoLineRows tbody tr {
+  max-height: 20px; /* or whatever height you need to make them all consistent */
+}
+
+.dataTable td {
+  /* essential */
+  text-overflow: ellipsis;
+  width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  
+  /* for good looks */
+  padding: 10px;
+}
+
+.missingSecuritiesTable tr {
+  min-height: 25px; /* or whatever height you need to make them all consistent */
+}
+
+.vertical-alignment-helper {
+    display:table;
+    height: 100%;
+    width: 100%;
+    pointer-events:none;
+}
+.vertical-align-center {
+    /* To center vertically */
+    display: table-cell;
+    vertical-align: middle;
+    pointer-events:none;
+}
+.modal-content {
+    /* Bootstrap sets the size of the modal in the modal-dialog class, we need to inherit it */
+    width:inherit;
+    height:inherit;
+    /* To center horizontally */
+    margin: 0 auto;
+    pointer-events:all;
+}
+
+.styled  {
+  height:700px;
+  width:90%;
+  margin: 0 auto;
+  fill:"#044B94";
+  fill-opacity:"0.4";
+  font-size:4px;
+  font-family: "Roboto Condensed";
+  font-style: normal;
+  font-weight: 300;
+}
+.responsive-svg {
+  width: 100%;
+  max-width: 100%; 
+  height:auto;
+  margin: auto;  
+  display:block;
+}
+
+.report_flag {
+    background-color: #ffff99 !important;
+}
+.rcg-photo{
+	background-size:100%;
+	height:640px;
+	background-repeat:no-repeat;
+}
+
+.rcg-logo{
+	font-size:2em;
+	padding-top:10px;
+}
+
+.photo1{
+	background-image: url('/static/img/rcgphoto1.jpg');
+}
+.photo2{
+	background-image: url('/static/img/rcgphoto2.jpg');
+}
+.photo3{
+	background-image: url('/static/img/rcgphoto3.jpg');
+}
+.photo4{
+	background-image: url('/static/img/rcgphoto4.jpg');
+}
+.photo5{
+	background-image: url('/static/img/rcgphoto5.jpg');
+}
+
+.rcg-header{
+	min-width:850px;
+}
+
+.rcgworldheader{
+	background-image: url('/static/img/worldheader.png');
+	background-repeat:no-repeat;
+	background-position:right; 
+	height: 40px;
+}
+
+.thin-hr{
+	margin: 10px 0;
+}
+
+.main-content{
+	margin-left:0px !important;
+	height:640px;
+}
+
+.alternate {
+  color: #3F729B;
+}
+
+.nav-tabs{
+  margin-bottom:4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #3c4296;
+}
+.nav-item{
+  border-color: #3c4296;
+}
+
+.output_data_form{
+  margin-bottom:1px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #3F729B;
+}
+
+.output_data_form input[type="text"]{
+  font-size: 1.0rem;
+  font-weight: 400;
+  color: #3F729B;
+  width:160px;
+  margin-bottom:1px;
+}
+
+.inverse-well{
+	opacity:0.7;
+	background-color:black;
+	color:white;
+}
+
+a{
+	color:#3c4296;
+	color:#021a5a;
+}
+
+.navy-bar{
+	height:3px !important;
+	min-height:3px !important;				
+	background-color:#3c4296;
+	background-color:#021a5a;
+}
+
+.navy-bar-thin{
+  height:2px !important;
+  min-height:2px !important;        
+  background-color:#3c4296;
+  background-color:#021a5a;
+}
+
+
+.login-nav{
+	padding:10px;
+}
+
+.hidden{
+	display:none;
+}
+
+.menu-options{
+	display:inline-block !important;
+	list-style:none;
+	padding-right:6px;
+}
+
+div.load_div{
+  z-index:200;
+  position:fixed;
+  left:40%;
+  top:50%;
+  width:120px;
+  height:120px;
+  background: url('spinner.gif')
+}
+
+div.geo_loading{
+  z-index:200;
+  position:fixed;
+  left:40%;
+  top:50%;
+  width:80px;
+  height:80px;
+  background: url('spinner.gif')
+}
+
+#loading2 {
+    position: absolute; width: 100%; height: 100%; background: url('spinner.gif') no-repeat center center;
+}
+
+.app-name{
+	font-weight:bold;
+}
+
+input[type="text"].output_field {
+  font-size:12px;
+}
+
+
+table .span1 {
+  float: none;
+  width: 44px;
+  margin-left: 0;
+}
+
+table .span2 {
+  float: none;
+  width: 124px;
+  margin-left: 0;
+}
+
+table .span3 {
+  float: none;
+  width: 204px;
+  margin-left: 0;
+}
+
+table .span4 {
+  float: none;
+  width: 284px;/
+  margin-left: 0;
+}
+
+table .span5 {
+  float: none;
+  width: 364px;
+  margin-left: 0;
+}
+
+table .span6 {
+  float: none;
+  width: 444px;
+  margin-left: 0;
+}
+
+table .span7 {
+  float: none;
+  width: 524px;
+  margin-left: 0;
+}
+
+table .span8 {
+  float: none;
+  width: 604px;
+  margin-left: 0;
+}
+
+table .span9 {
+  float: none;
+  width: 684px;
+  margin-left: 0;
+}
+
+table .span10 {
+  float: none;
+  width: 764px;
+  margin-left: 0;
+}
+
+table .span11 {
+  float: none;
+  width: 844px;
+  margin-left: 0;
+}
+
+table .span12 {
+  float: none;
+  width: 924px;
+  margin-left: 0;
+}
+
+table .span13 {
+  float: none;
+  width: 1004px;
+  margin-left: 0;
+}
+
+table .span14 {
+  float: none;
+  width: 1084px;
+  margin-left: 0;
+}
+
+table .span15 {
+  float: none;
+  width: 1164px;
+  margin-left: 0;
+}
+
+table .span16 {
+  float: none;
+  width: 1244px;
+  margin-left: 0;
+}
+
+table .span17 {
+  float: none;
+  width: 1324px;
+  margin-left: 0;
+}
+
+table .span18 {
+  float: none;
+  width: 1404px;
+  margin-left: 0;
+}
+
+table .span19 {
+  float: none;
+  width: 1484px;
+  margin-left: 0;
+}
+
+table .span20 {
+  float: none;
+  width: 1564px;
+  margin-left: 0;
+}
+
+table .span21 {
+  float: none;
+  width: 1644px;
+  margin-left: 0;
+}
+
+table .span22 {
+  float: none;
+  width: 1724px;
+  margin-left: 0;
+}
+
+table .span23 {
+  float: none;
+  width: 1804px;
+  margin-left: 0;
+}
+
+table .span24 {
+  float: none;
+  width: 1884px;
+  margin-left: 0;
+}
+
+
+.caret {
+    position: absolute;
+    right: 16px;
+    top: 16px;
+}
+
+.btn-default:hover, .btn-default:focus, .btn-default:active, .btn-default.active, .open .dropdown-toggle.btn-default {
+    background-color: #FFF;    
+}
+
+.btn-group.open .dropdown-toggle {
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(102, 175, 233, 0.6)
+}
+
+.btn-group {width: 100%}
+.dropdown-menu {width: 100%;}
+

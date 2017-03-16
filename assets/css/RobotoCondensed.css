@@ -1,0 +1,151 @@
+/**
+ * Include Roboto Condensed font in your project
+ * 
+ * Download Roboto Condensed ttf files from Google Fonts and place it in the same directory of this CSS file
+ * You can then use this font in your project by setting
+ * font-face: "Roboto Condensed", Helvetica, Arial, sans-serif;
+ *
+ * @author Mattia Migliorini (deshack)
+ * @license MIT
+ */
+
+/* Light */
+@font-face {
+	font-family: "Roboto Condensed";
+	font-style: normal;
+	font-weight: 300;
+	src: local('Roboto Condensed Light'), local('RobotoCondensed-Light'), url("RobotoCondensed-Light.ttf") format('truetype');
+}
+@font-face {
+	font-family: "Roboto Condensed";
+	font-style: italic;
+	font-weight: 300;
+	src: local('Roboto Condensed Light Italic'), local('RobotoCondensed-LightItalic'), url("RobotoCondensed-LightItalic.ttf") format('truetype');
+}
+
+/* Normal */
+@font-face {
+	font-family: "Roboto Condensed";
+	font-style: normal;
+	font-weight: 400;
+	src: local('Roboto Condensed Regular'), local('RobotoCondensed-Regular'), url("RobotoCondensed-Regular.ttf") format('truetype');
+}
+@font-face {
+	font-family: "Roboto Condensed";
+	font-style: italic;
+	font-weight: 400;
+	src: local('Roboto Condensed Italic'), local('RobotoCondensed-Italic'), url("RobotoCondensed-Italic.ttf") format('truetype');
+}
+
+/* Bold */
+@font-face {
+	font-family: "Roboto Condensed";
+	font-style: normal;
+	font-weight: 700;
+	src: local('Roboto Condensed Bold'), local('RobotoCondensed-Bold'), url("RobotoCondensed-Bold.ttf") format('truetype');
+}
+@font-face {
+	font-family: "Roboto Condensed";
+	font-style: italic;
+	font-weight: 700;
+	src: local('Roboto Condensed Bold Italic'), local('RobotoCondensed-BoldItalic'), url("RobotoCondensed-BoldItalic.ttf") format('truetype');
+}
+
+body {
+   font-family: 'Roboto', sans-serif !important;
+   font-size:10px !important;
+}
+
+p{
+	font-family: 'Roboto', sans-serif !important;
+    font-size:10px !important;
+    font-weight: medium;
+}
+
+select{
+	font-family: 'Roboto', sans-serif;
+    font-size:10px !important;
+    line-height:30px;
+}
+legend{
+	font-family: 'Roboto', sans-serif;
+    font-size: 18px;
+    color: #177692;
+    font-weight: bold;
+}
+p{
+	font-family: 'Roboto', sans-serif;
+    font-size:10px !important;
+    
+}
+
+h1, h2 {
+	font-family: 'Roboto', sans-serif;
+    display: inline-block;
+    font-weight: bold;
+}
+
+h4 {
+	font-family: 'Roboto', sans-serif;
+    font-size:14px !important;
+    font-weight: 750;
+    color: #177692;
+    margin-bottom: 0.7rem;
+    font-weight: bold;
+}
+
+h5 {
+	font-family: 'Roboto', sans-serif;
+    font-weight: 650;
+    color: #177692;
+    margin-bottom: 0.6rem;
+    font-weight: bold;
+    font-size:12px !important;
+}
+
+h6 {
+	font-family: 'Roboto', sans-serif;
+    font-size:10px !important;
+    font-weight: 650;
+    color: #177692;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+input[type="text"] {
+  font-size:10px !important;
+  font-color:black;
+  font-family: 'Roboto', sans-serif;
+  line-height:14px;
+}
+input[type="checkbox"] {
+  font-size:10px !important;
+  color:black;
+  font-family: 'Roboto', sans-serif;
+  line-height:14px;
+}
+
+button {
+  font-size:10px !important;
+  font-color:black;
+  font-family: 'Roboto', sans-serif;
+}
+
+input[type="text"].output_field {
+  font-size:10px !important;
+  color:black;
+  font-family: 'Roboto', sans-serif;
+}
+
+label{
+	font-size:10px !important;
+	color:black;
+	font-family: 'Roboto', sans-serif;
+	font-weight: bold;
+}
+
+table {
+  font-size:10px !important;
+  font-family: 'Roboto', sans-serif;
+  color:black;
+}

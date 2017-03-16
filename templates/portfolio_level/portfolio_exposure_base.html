@@ -1,0 +1,63 @@
+<script type = "text/javascript">
+////////////////////////////////////
+$(document).ready(function(){
+
+    hideDataAlerts()
+    $('#portfolio_analysis_nav li.active').removeClass('active');
+    $('#exposure_tab').addClass('active');
+    
+    ////////////////////////////////////
+    // Control for W2 Tabs
+    $("#my_exposure_Tabs").w2destroy("my_exposure_Tabs");
+    $(function () {
+        $('#my_exposure_Tabs').addClass('small')
+        $('#my_exposure_Tabs').w2tabs({
+
+            name :'my_exposure_Tabs',
+            active :'port_geographic_exposure',
+            tabs    : [
+                { id: 'port_geographic_exposure', caption: 'Geographic Exposure' },
+                { id: 'port_instrument_exposure', caption: 'Instrument & Asset Exposure' },
+                { id: 'port_sector_exposure', caption: 'Sector & Industry Exposure' },
+            ],
+            onClick: function (event) {
+                delegate_exposure_tab(event.target)
+            }
+        });
+    });
+    // Default Tab on Load
+    delegate_exposure_tab('port_geographic_exposure')
+})
+////////////////////////////////////
+function delegate_exposure_tab(target){
+
+    url_dict['port_instrument_exposure'] = '/templates/portfolio_level/portfolio_exposure_instrument.html'
+    url_dict['port_geographic_exposure'] = '/templates/portfolio_level/portfolio_exposure_geographic.html'
+    url_dict['port_sector_exposure'] = '/templates/portfolio_level/portfolio_exposure_sector.html'
+
+    var targetDirect = url_dict[target]
+
+    $('#myExposureTabContent').empty()
+    $('#myExposureTabContent').load(targetDirect);
+}
+
+</script>
+
+<!-- ################################################### Exposure Menu Regiom ################################################### -->
+<div class="row-fluid" style="position:absolute; top:20px;">
+    <!-- ################################################### Tab Content Region ################################################### -->
+    <div id="my_exposure_Tabs"></div>
+    <div style="overflow:visible; position:relative; height:1200px; top:10px;"  id="myExposureTabContent" class="nav nav-tabs tab-content"></div>
+</div>
+
+<!-- ################################################### Geographic Modal ################################################### -->
+<div id="geo_modal" class="modal" style="display:none;">
+    <div style"position:absolute; left:40%; top:40%; height:100%; width:100%;" class="geo_loading"></div>
+</div>
+<!-- ################################################### Explore Modal ################################################### -->
+<div id="explore_modal" class="modal modal-lg" style="display:none;">
+</div>
+
+
+
+

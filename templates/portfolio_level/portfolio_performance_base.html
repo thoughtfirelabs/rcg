@@ -1,0 +1,67 @@
+<script type = "text/javascript">
+
+////////////////////////////////////
+$(document).ready(function(){
+
+    $('#port_analysis_nav li.active').removeClass('active');
+    $('#performance_tab').addClass('active');
+
+    ////////////////////////////////////
+    // Control for W2 Tabs
+    $(function () {
+        $('#my_performance_Tabs').w2tabs({
+
+            name :'my_performance_Tabs',
+            active :'port_performance_overview',
+            tabs    : [
+                { id: 'port_performance_overview', caption: 'Overview' },
+                { id: 'port_daily_performance_metrics', caption: 'Daily Metrics' },
+                { id: 'port_geographic_performance', caption: 'Geographic Performance' },
+                { id: 'port_instrument_performance', caption: 'Instrument Performance' },
+                { id: 'port_sector_performance', caption: 'Sector Performance' },
+                { id: 'port_asset_class_performance', caption: 'Asset Class Performance' },
+            ],
+            onClick: function (event) {
+                $('#loading').show();
+                //delegate_performance_tab(event.target)
+            }
+        });
+    });
+    // Default Tab on Load
+    //delegate_performance_tab('port_performance_overview')
+    $('#loading').hide();
+})
+////////////////////////////////////
+function delegate_performance_tab(target){
+
+    url_dict = new Array()
+    url_dict['port_performance_overview'] ='port_performance_overview/'
+    url_dict['port_daily_performance_metrics']='port_performance_daily_metrics/'
+    url_dict['port_geographic_performance']='port_geographic_performance/'
+    url_dict['port_instrument_performance']='port_instrument_performance/'
+    url_dict['port_sector_performance']='port_sector_performance/'
+    url_dict['port_asset_class_performance']='port_asset_class_performance/'
+
+    $.ajax({
+      type: "GET",
+      url: url_dict[target],
+      error: function(data){
+        alert("There was a problem");
+      },
+      success: function(data){
+        $('#myPerformanceTabContent').html(data);
+        $('#loading').hide()
+      }
+    })
+}
+</script>
+
+<!-- ################################################### Exposure Menu Regiom ################################################### -->
+<div class="row-fluid" style="position:absolute; top:20px;">
+
+    <!-- ################################################### Tab Content Region ################################################### -->
+    <div  id="my_performance_Tabs"></div>
+    <div style="overflow:visible; position:relative; height:1200px; top:10px;"  id="myPerformanceTabContent" class="nav nav-tabs tab-content">
+    </div>
+</div>
+

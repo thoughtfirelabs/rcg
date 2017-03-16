@@ -1,0 +1,320 @@
+<script type = "text/javascript">
+
+//////////////////////////////////////////////////////////////////////////////////////
+$(document).ready(function(){
+
+  // Close Handler - Everything else handled by bootstrap
+    $('#modalClose').on('click',function(){
+      $('#modalContainer').remove()
+    })
+
+  // Default States
+  $('#form1').show()
+  $('#form2').hide()
+
+  ////////// Back Button
+  $('#back').on('click',function(){
+
+      proxyID = $('#addProxyID2').val()
+      proxyTicker = $('#addProxyTicker2').val() 
+      if(typeof(proxyID) != "" && proxyID != ""){
+        $('#addProxyID').val(proxyID)
+      }
+      if(typeof(proxyTicker) != "" && proxyTicker != ""){
+        $('#addProxyTicker').val(proxyTicker)
+      }
+      $('#form2').hide()
+      $('#form1').show("slide", { direction: "left" }, 500);
+  })
+
+
+
+  //////////////// Stage 1 of Setup ///////////////////////////
+  $('#next').on('click',function(){
+
+      $('#confirmationOrInfoMessage').html('')
+
+      $('#addProxyID2').val('')
+      $('#addProxyTicker2').val('')
+      $('#addProxyName').val('')
+      $('#addProxyInstrumentType').val('')
+      // Check if string has white space
+      function hasWhiteSpace(s) {
+        return s.indexOf(' ') >= 0;
+      }
+      
+      // Validate Fields
+      field1Valid = true
+      field1 = $('#addProxyTicker')
+      if(field1.val() == '' || typeof(field1.val()) == "undefined"){
+        field1Valid = false
+      }
+
+      field2Valid = true
+      field2 = $('#addProxyID')
+      if(field2.val() == '' || typeof(field2.val()) == "undefined"){
+        field2Valid = false
+      }
+
+      if(!field2Valid && !field1Valid){
+        alert('Missing Information for Proxy Ticker and Proxy ID')
+        return
+      }
+
+      // Check if Ticker Entered Exists
+      if(field1Valid){
+        var proxyTicker = field1.val()
+        checkIfProxyExists(proxyTicker,function(data){
+
+          exists = data['exists']
+          // Ticker Already Exists - Using Information Stored to Populate Data
+          if(exists){
+
+            $('#confirmationOrInfoMessage').html('A security associated with the entered ticker already exists. Confirm the information before using this security as a proxy.')
+            $('#form1').hide()
+            $('#form2').show("slide", { direction: "right" }, 500);
+
+            populateProxyStep2Data(data) // Populate data
+            return
+          }
+          // If it doesn't exist, check if a possibly existing ID was entered.
+          else if(field2Valid){
+              var proxyID = field2.val()
+              checkIfProxyExists(proxyID,function(data){
+                  exists = data['exists']
+                  if(exists){
+                      $('#confirmationOrInfoMessage').html('Provide required information before completing Proxy.')
+                      $('#form1').hide()
+                      $('#form2').show("slide", { direction: "right" }, 500);
+                      populateProxyStep2Data(data) // Populate data
+                  }
+              })
+              return
+          }
+          // Proxy is valid but doesn't exist, id is either not valid or doesnt exist, prompt user to enter more info based on proxy.
+          else{
+            $('#confirmationOrInfoMessage').html('Provide required information before completing Proxy.')
+            $('#form1').hide()
+            $('#form2').show("slide", { direction: "right" }, 500);
+            return
+          }
+
+        })
+      }
+      // This should always be the case if field 1 is not valid.  This means that we are 
+      // definitely using the id as a setup identifier.
+      else if(field2Valid){
+          var proxyID = field2.val()
+          checkIfProxyExists(proxyID,function(data){
+
+            exists = data['exists']
+            // ID Doesn't Exist - Flag Error
+            if(!exists){
+              alert('Error : Entered ID Doesnt Exist in Database')
+              return
+            }
+
+            // Use Data to Populate Next Step
+            $('#confirmationOrInfoMessage').html('Confirm the information for provided ID.')
+            $('#form1').hide()
+            $('#form2').show("slide", { direction: "right" }, 500);
+            populateProxyStep2Data(data) // Populate data
+          })
+      }
+      else{
+        alert('Error')
+        return
+      }
+
+  })
+  
+  //////////////// Stage 2 of Setup ///////////////////////////
+  $('#updateProxy').on('click',function(){
+
+      securityID = $('#securityIDForModal').html()
+      proxyID = $('#addProxyID2').val()
+      proxyTicker = $('#addProxyTicker2').val() 
+      proxyName = $('#addProxyName').val() 
+      proxyInstrumentType = $('#addProxyInstrumentType').val() 
+
+      function validate(field){
+        if(field != "" && field != "undefined"){
+          return true
+        }
+        return false
+      }
+      if(validate(proxyID) &&  validate(proxyTicker) && validate(proxyName) && validate(proxyInstrumentType)){
+
+          proxyData = new Object()
+          proxyData.proxyID = proxyID
+          proxyData.proxyTicker = proxyTicker
+          proxyData.proxyName = proxyName
+          proxyData.proxyInstrumentType = proxyInstrumentType
+
+          // Update
+          updateProxy(securityID,proxyData,function(updateResponse,instrument_types){
+
+              if(typeof(updateResponse['error']) == "undefined"){
+                  updateSecurityInTable(securityID,function(){
+                      $('#modalContainer').remove()
+                  })
+                  return
+              }
+              else{
+                alert(error)
+              }
+          })
+          $('#modalContainer').remove()
+      }
+      else {
+        alert('Invaild Proxy Parameters')
+        return
+      }
+  })
+})
+////////////////////////////////////////////////////////////////////////////////////
+// Moves to Page 1 of Modal
+function proxyModalMoveToPage1(){
+  $('#form2').hide()
+  $('#form1').show("slide", { direction: "left" }, 500);
+}
+////////////////////////////////////////////////////////////////////////////////////
+// Populate Data in Modal - Can pass in missing all_instrument_types if not worried
+// about repopulating the drop down menu.
+function populateAddProxyModal(security_details){
+
+  var securityName = security_details["security_name"]
+  $('#securityIDForModal').hide()
+  $('#securityIDForModal').html(security_details["rcg_id"])
+  $('#SecurityNameAddingProxyFor').html(securityName)
+  return
+} 
+//// Populates data in phase 2 of the proxy setup, if the security being used as a proxy
+// already exists.
+function populateProxyStep2Data(data){
+   // Populate Dropdown
+    get_all_instrument_types(function(instrument_types){
+        $('#addProxyInstrumentType option').remove()
+
+        $.each(instrument_types, function(key,value) {
+           $('#addProxyInstrumentType')
+               .append($("<option></option>")
+               .attr("value",value)
+               .text(value));
+        });
+        if(typeof(data['instrument_type']) != "undefined"){
+             $('#addProxyInstrumentType').val(data['instrument_type'])
+             $('#addProxyInstrumentType option:not(:selected)').attr('disabled', true);
+         }
+    })
+    // Populate Data to Confirm
+    $('#addProxyID2').val(data['rcg_id'])
+    $('#addProxyTicker2').val(data['search_name'])
+    $('#addProxyName').val(data['security_name'])
+
+    $("#addProxyID2").prop("readonly", true);
+    $("#addProxyTicker2").prop("readonly", true);
+    $("#addProxyName").prop("readonly", true);
+  return
+} 
+
+</script>
+
+
+<!-- Modal -->
+<div id="myModalContent" name="addProxyModal" style="margin:0;" class="modal-dialog">
+    <!-- Modal content-->
+    
+    <div class="modal-content" style="position:absolute; left:0px; width:360px; height:460px;; margin:20px; display: inline-block;">
+          
+          <div class="row-fluid">
+              <h2 style="float:left; font-size:16px">Add Proxy<span style="color:#b92429">.</span></h2>
+              <button type="button" class="btn btn-failure" id="modalClose" style="float:right; font-size:16px;" data-dismiss="modal">&times;</button>
+          </div>
+
+          <div class="row-fluid" style="color:#696969; position:relative; top:-5px;">
+              <label id="SecurityNameAddingProxyFor"></label>
+          </div>
+
+          <!-- ##################################### Part 1 ##################################### -->
+          <div id = "form1" style="position:relative; top:30px; height:375px;">
+
+                  <form style="width:100%; height:100%">
+
+                      <div class="row-fluid">
+                          <h2 style="float:left; font-size:13px">Create New<span style="color:#b92429">.</span></h2>
+                      </div>
+
+                      <div class="form-group" style="position:relative; top:15px;">
+                        <label for="addProxyTicker" style="color:#696969">Proxy Ticker</label>
+                        <input type="text" class="form-control" id="addProxyTicker" aria-describedby="addProxyTickerHelp" placeholder="Enter Bloomberg ticker">
+                        <small id="addProxyTickerHelp" class="form-text text-muted">Required.</small>
+                      </div>
+
+                      <div align="center" class="row-fluid" style="position:relative; top:10px;">
+                          <h2 style="margin: 0 auto; font-size:12px">or<span style="color:#b92429"></span></h2>
+                      </div>
+
+                      <div class="row-fluid" style="position:relative; top:30px;">
+                          <h2 style="float:left; font-size:13px">Use Existing<span style="color:#b92429">.</span></h2>
+                      </div>
+
+                      <div class="form-group" style="position:relative; top:50px;">
+                        <label for="addProxyID" style="color:#696969">Proxy ID</label>
+                        <input type="text" class="form-control" id="addProxyID" aria-describedby="addProxyIDHelp" placeholder="Enter internal identifier">
+                        <small id="addProxyIDHelp" class="form-text text-muted">Required.</small>
+                      </div>
+
+                      <button type="button" id="next" style="position:absolute; right:10px; bottom:10px;" class="btn btn-primary">Next</button> 
+                        
+                  </form>
+
+            </div>
+
+            <!-- ##################################### Part 2 ##################################### -->
+            <div id = "form2" style="position:relative; top:30px; height:375px;">
+
+                  <form style="width:100%; height:100%">
+
+                      <div class="row-fluid" style="position:relative; top:-15px;">
+                          <h2 id="confirmationOrInfoMessage" style="float:left; font-size:11px">Confirmation<span style="color:#b92429">.</span></h2>
+                      </div>
+
+                      <div class="form-group">
+                        <label for="addProxyID2">Proxy ID</label>
+                        <input type="text" class="form-control" id="addProxyID2" aria-describedby="idhelp" placeholder="Missing">
+                        <small id="idhelp" class="form-text text-muted">Required.</small>
+                      </div>
+
+                      <div class="form-group">
+                        <label for="addProxyTicker2">Ticker</label>
+                        <input type="text" class="form-control" id="addProxyTicker2" aria-describedby="addTickerHelp" placeholder="Missing">
+                        <small id="addTickerHelp" class="form-text text-muted">Required.</small>
+                      </div>
+
+                      <div class="form-group">
+                        <label for="addProxyName">Security Name</label>
+                        <input type="text" class="form-control" id="addProxyName" aria-describedby="securityNameHelp" placeholder="Missing">
+                        <small id="securityNameHelp" class="form-text text-muted">Required.</small>
+                      </div>
+
+                      <div class="form-group">
+                        <label for="addProxyInstrumentType">Instrument</label>
+                        <select style="width:95%; background-color:#FFFFFF"  aria-describedby="instrumentHelp" id="addProxyInstrumentType">
+                            <option selected="selected">None</option>
+                        </select>
+                        <small id="instrumentHelp" class="form-text text-muted">Required.</small>
+                      </div>
+
+                      <div class="form-group">
+                        <button type="button" id="back" style="position:absolute; left:10px; bottom:10px;" class="btn btn-warning">Back</button> 
+                        <button type="button" id="updateProxy" style="position:absolute; right:10px; bottom:10px;" class="btn btn-primary">Submit</button> 
+                      </div>
+
+                  </form>
+
+            </div>
+
+      </div>
+</div>
+

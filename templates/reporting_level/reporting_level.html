@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block reporting_level %} 
+
+{% block css %}
+{{block.super}}
+{% endblock %}
+
+{% block js %}
+{{block.super}}
+{% endblock %}
+
+<script type = "text/javascript">
+
+////////////////////////////////////
+$(document).ready(function(){
+
+    $('#base_nav li.active').removeClass('active');
+    $('#reporting_tab').addClass('active');
+
+    $('#workspace_warning').hide()
+    $('#workspace_success').hide()
+    $( "#snapshot_date" ).datepicker();
+
+    // Control for W2 Tabs
+    $(function () {
+        $('#my_report_Tabs').w2tabs({
+            name :'my_report_Tabs',
+            active :'limit_report',
+            tabs    : [
+                { id: 'limit_report', caption: 'Limit Report' },
+                { id: 'monthly_exposure_report', caption: 'Monthly Exposure Report' },
+            ],
+            onClick: function (event) {
+                delegate_report_tab(event.target)
+            }
+        });
+    });
+
+    // Add Click Handler for Setting Workspace
+    $('#setWorkspace').on('click', function () {
+      setWorkspaceDate($('#snapshot_date').val(),function(port_id,port_name,fund_id,fund_name,snapshot_date,validity){
+          // Populate Workspace Data
+          populateWorkspaceData(snapshot_date,validity)
+      })
+    })
+
+    // Default Tab on Load
+    delegate_report_tab('limit_report') 
+
+    // Get Workspace Date - Default call on page load
+    // Get Workspace Portfolio and Populate Information After Data Passed Back in Callback
+    getWorkspace(function(port_id,port_name,fund_id,fund_name,snapshot_date,validity){
+        populateWorkspaceData(snapshot_date,validity)
+    })
+
+})
+////////////////////////////////////
+function delegate_report_tab(target){
+
+    url_dict = new Array()
+
+    url_dict['limit_report'] = '/templates/reporting_level/limitReport/limit_report_base.html'
+    url_dict['monthly_exposure_report'] = '/templates/reporting_level/monthlyExposureReport/monthly_exposure_report.html'
+    var targetDirect = url_dict[target]
+    
+    $('#myReportTabContent').empty()
+    $('#myReportTabContent').load(targetDirect);
+}
+
+// Display Workspace Data and Data Alerts Appropriately
+function populateWorkspaceData(snapshot_date,validity){
+
+    $('#snapshot_date').val(snapshot_date)
+    if(validity){animateWorkspaceSuccess()}
+    else{animateWorkspaceError()}
+    return
+}
+
+</script>
+
+<!-- ############################################ Set Workspace Region ############################################### -->
+<div class="row" style="position:relative; height:80px; left:20px; width:1300px;">
+
+    <div class="col-md-3"  style="position:relative; right:10px; width:300px; top:10px; float:left">
+         
+          <div class="row" style="position:relative; top:10px;">
+            <div class="col-md-6"><p>Select Date:</p></div>
+            <div class="col-md-6"><input readonly style="background-color:#FFFFFF" type="text" id="snapshot_date"></input></div>
+          </div>
+
+          <div class="row" style="position:relative; top:20px;">
+              <button style="position:relative; left:5px; float:right; bottom:4px;" class="btn btn-small btn-primary" id="setWorkspace">Set Workspace</button>
+          </div>
+    </div>
+
+    <!-- ################## -->
+    <div class="col-md-6" style="position:relative; top:15px; left:150px; width:600px;">
+        <div id="workspace_warning" class="alert alert-danger alert_style" role="alert">
+          <a href="#" class="alert-link"></a>
+        </div>
+        <div id="workspace_success" class="alert alert-success alert_style" role="alert">
+          <a href="#" class="alert-link"></a>
+        </div>
+    </div>
+
+</div>
+
+<!-- ################################################### General Region ################################################### -->
+
+<!-- ################################################### Report Menu Regiom ################################################### -->
+<div class="row-fluid" style="position:relative; top:10px; height:800px;">
+    <!-- ################################################### Tab Content Region ################################################### -->
+    <div id="my_report_Tabs"></div>
+    <div style="overflow:visible; position:relative; height:1200px; top:10px;"  id="myReportTabContent" class="nav nav-tabs tab-content"></div>
+</div>
+
+{% endblock %}

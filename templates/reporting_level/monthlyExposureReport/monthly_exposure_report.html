@@ -1,0 +1,116 @@
+<script type = "text/javascript">
+
+///////////////////////////////////////////////////////////////////////////////
+$(document).ready(function(){
+
+    /// Button click handlers
+    $('#retrieveExposureReport').on("click",function(){ 
+        retrieveExposureReport()
+    })
+    $('#retrieveSecurityDetails').on("click",function(){ 
+       retrieveSecurityDetails()
+    })
+
+    ////////////// Checkbox Handlers 1 ///////////////
+    $('input.exposureReportType').on('change', function() {
+        $('input.exposureReportType').not(this).prop('checked', false); 
+
+        var checkeIDS = new Array() 
+        $('input.exposureReportType:checked').each(function () {
+          checkeIDS.push($(this).attr('id'))
+        })
+        var updateType = checkeIDS[0]
+        if(updateType == 'portfolio'){
+          $("#port_select").prop("disabled",false);
+        }
+        else{
+          $("#port_select").prop("disabled",true);
+         }   
+    });
+
+    // Get Portfolio Options
+    loadPortfolios()
+});
+
+///////////////////////////////////////////////////////////////////////////////
+// Uses Portfolio ID to Retrieve and Download Security Details
+function retrieveSecurityDetails(){
+
+  var selection = 'portfolio' // Default
+
+  var checkeIDS = new Array() 
+  $('input.exposureReportType:checked').each(function () {
+    checkeIDS.push($(this).attr('id'))
+  })
+  var selection = checkeIDS[0]
+
+  referenceID = "" // Hardcoded on back end for fund, for now
+  if(selection=='portfolio'){
+    var select = document.getElementById("port_select");
+    var referenceID = select.options[select.selectedIndex].value;
+  }
+
+  downloadSecurityDetails(referenceID,selection)
+}
+///////////////////////////////////////////////////////////////////////////////
+function retrieveExposureReport(){
+
+  var selection = 'portfolio' // Default
+  var checkeIDS = new Array() 
+  $('input.exposureReportType:checked').each(function () {
+    checkeIDS.push($(this).attr('id'))
+  })
+  var selection = checkeIDS[0]
+  
+  referenceID = "" // Hardcoded on back end for fund, for now
+  if(selection=='portfolio'){
+    var select = document.getElementById("port_select");
+    var referenceID = select.options[select.selectedIndex].value;
+  }
+
+  downloadExposureReport(referenceID,selection)
+}
+</script>
+
+<div id = "reportContent">
+  <!-- ################################################### General Region ################################################### -->
+  <h5 style="position:relative; left: 15px; top:5px;" id="report_name_header"> Monthly Exposure Report </h5>
+
+  <div class="row" style="position:relative; top:30px; left:25px; width:900px; height:50px;">
+
+      <!-- ######################################################## -->
+    <div class="col-md-4" style="position:relative; width:220px;">
+        <div class="row" style="position:relative; top:8px;">
+            <div style="position:relative; top:2px;" class="col-md-6"><p>Select Portfolio:</p></div>
+            <div class="col-md-6"><select id="port_select" style="height:25px; width:200px;"></select></div>
+        </div>
+    </div>
+
+    <div class="col-md-8" style="position:relative; left:150px;">
+      <button style="width:200px; height:35px; border-width:1px; border-color:darkgray;" id="retrieveExposureReport" class="btn btn-default">
+          <div class = "row">
+              <img class = "col-sm-3" style="position:relative; left:-5px; top:-5px;" src="/static/img/downloadIcon.png" width="20" /></img>
+              <p style="position:relative; top:2px; left:-15px;" class = "col-sm-6"> Download Exposure Report </p>
+          </div>
+      </button>
+    </div>
+
+  </div>
+
+  <div class="row" style="position:relative; width:480px; left:25px; top:45px;">
+        <div class="col-lg-6" style="font-family: 'Roboto', sans-serif; font-size:10px; font-weight: bold;">
+              <input class="exposureReportType" type="checkbox" id="portfolio" checked>Report for Selected Portfolio<br>
+              <input class="exposureReportType" type="checkbox" id="fund"> Report for Entire Fund <br>
+        </div>
+
+        <div class="col-lg-6" style="position:relative; left:130px;">
+          <button style="width:200px; height:35px; border-width:1px; border-color:darkgray;" id="retrieveSecurityDetails" class="btn btn-default">
+              <div class = "row">
+                  <img class = "col-sm-3" style="position:relative; left:-5px; top:-5px;" src="/static/img/downloadIcon.png" width="20" /></img>
+                  <p style="position:relative; top:2px; left:-15px;" class = "col-sm-6"> Download Security Details </p>
+              </div>
+          </button>
+         </div>
+
+  </div>
+</div>

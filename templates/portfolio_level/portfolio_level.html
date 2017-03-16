@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block portfolio_level %} 
+
+{% block css %}
+{{block.super}}
+{% endblock %}
+
+{% block js %}
+{{block.super}}
+{% endblock %}
+
+<script type = "text/javascript">
+google.load('visualization', '1', {'packages': ['geochart']});
+
+$(document).ready(function(){
+
+    $('#base_nav li.active').removeClass('active');
+    $('#portfolio_level_tab').addClass('active');
+
+    $('#workspace_warning').hide()
+    $('#workspace_success').hide()
+    $( "#snapshot_date" ).datepicker();
+
+    hideDataAlerts()
+    loadPortfolios()
+
+    ////////////////////////////////////
+    // Control for W2 Tabs
+    $(function () {
+        $('#my_portfolio_Tabs').w2tabs({
+            name :'my_portfolio_Tabs',
+            active :'portfolio_overview',
+            tabs    : [
+                { id: 'portfolio_overview', caption: 'Overview' },
+                { id: 'portfolio_exposure_base', caption: 'Exposure Analysis' },
+                { id: 'portfolio_performance_base', caption: 'Performance Attribution' },
+                { id: 'portfolio_daily_metrics_base', caption: 'Daily Metrics' },
+            ],
+            onClick: function (event) {
+                delegate_portfolio_tab(event.target)
+            }
+        });
+    });
+    // Default Tab
+    delegate_portfolio_tab('portfolio_overview')
+})
+
+////////////////////////////////////
+// Controls the HTML Showing in Tab Content Area Based on Tab Selected
+function delegate_portfolio_tab(target){
+
+    url_dict = new Array()
+    url_dict['portfolio_overview'] = '/templates/portfolio_level/portfolio_overview.html'
+    url_dict['portfolio_exposure_base'] = '/templates/portfolio_level/portfolio_exposure_base.html'
+    url_dict['portfolio_performance_base'] = '/templates/portfolio_level/portfolio_performance_base.html'
+    url_dict['portfolio_daily_metrics_base'] = '/templates/portfolio_level/portfolio_daily_metrics_base.html'
+
+    // Deprecated Temporarily
+    if(target == 'portfolio_performance_base' || target == 'portfolio_daily_metrics_base'){
+        alert('Temporarily Deprecated - Under Construction')
+        return
+    }
+    var targetDirect = url_dict[target]
+
+    $('#myPortfolioTabContent').empty()
+    $('#myPortfolioTabContent').load(targetDirect);
+
+}
+// Manually highlights a given row of the portfolio table based on the id
+function higlightPortfolioTable(port_id){
+  // Default Highlight Coresponding Row of Table
+  var foundIndex = 0
+
+  // Highlight Correspondign Element in Table
+  var table = $('#port_table').DataTable({"retrieve": true})
+  var data = table.rows().data();
+  data.each(function (value, index) {
+      if(value[0]==port_id){
+          foundIndex = index
+      }
+       
+  });
+  foundIndex=foundIndex+1
+  var row = $('#port_table tr').eq(foundIndex)
+  row.addClass('row_selected')
+}
+///////////////////////////////////////////////////////////////////////////////
+// Parses Data Report and Outputs Information Summarizing the Missing Securities for Given Portfolio
+function handle_data_report(error_data,draw_table){
+
+    num_missing_fatal_securities = error_data['num_missing_fatal_securities']
+    num_missing_fatal_fields = error_data['num_missing_fatal_fields']
+    num_assumption_securities = error_data['num_assumption_securities']
+    num_assumptions = error_data['num_assumptions']
+
+    fatal_data_report = error_data['fatal_data_report']
+    nonfatal_data_report = error_data['nonfatal_data_report']
+
+    num_missing_definitions = error_data['num_missing_definitions']
+    num_assumptions = error_data['num_assumptions']
+
+    /////////////////////////////////////////////////////
+    if (num_assumption_securities > 0){
+      $('#assumptions_warning a').html("Warning : A total of "+ String(num_assumption_securities)+" assumptions were made for made for "+String(num_assumption_securities)+" different securities in the calculation pool.")
+    
+      if (draw_table == true){
+          assumptions_table = create_missing_data_table('#assumption_data_table',nonfatal_data_report)
+          assumptions_table.draw()
+          $('#assumption_data_table_row').show()
+      }
+      $('#assumptions_warning').show()
+      $('#assumptions_success').hide()
+
+
+    }
+    else{
+      $('#assumptions_success a').html("Success : No assumptions made for security attributes.")
+      $('#assumptions_warning').hide()
+      $('#assumptions_success').show()
+
+      var dataTable = $('#assumption_data_table').DataTable({"pageLength": 12, "searching":false, "retrieve": true});
+        dataTable.clear();
+      $('#assumption_data_table_row').hide()
+    }
+    /////////////////////////////////////////////////////
+    if (num_missing_fatal_securities > 0){
+      $('#data_warning a').html("Warning : A total of "+ String(num_missing_fatal_fields)+" required data fields were missing for  "+String(num_missing_fatal_securities)+" different securities, these securities were removed from the exposure calculations.")
+
+      if (draw_table == true){
+          missing_data_table = create_missing_data_table('#missing_data_table',fatal_data_report)
+          missing_data_table.draw()
+          $('#missing_data_table_row').show()
+      }
+
+      $('#data_warning').show()
+      $('#data_success').hide()
+
+    }
+    else{
+        var dataTable = $('#missing_data_table').DataTable({"pageLength": 12, "searching":false, "retrieve": true});
+        dataTable.clear();
+        $('#missing_data_table_row').hide()
+
+        $('#data_warning').hide()
+        $('#data_success').show()
+        $('#data_success a').html("Success : No Fatal Missing Data for Securities.  All Securities Included in Calculations")
+            
+    }
+}
+
+</script>
+
+
+<!-- ############################################ Set Workspace Region ############################################### -->
+<div class="row" style="position:relative; height:80px; left:20px; width:1300px;">
+
+    <div class="col-md-3"  style="position:relative; right:10px; width:300px; top:10px; float:left">
+         
+         <div class="row" style="position:relative; top:4px;">
+            <div class="col-md-6"><p>Selected Portfolio:</p></div>
+            <div class="col-md-6"><input readonly style="background-color:#FFFFFF" type="text" id="selectedPortfolio"></input></div>
+         </div>
+
+          <div class="row" style="position:relative; top:10px;">
+            <div class="col-md-6"><p>Select Date:</p></div>
+            <div class="col-md-6"><input readonly style="background-color:#FFFFFF" type="text" id="snapshot_date"></input></div>
+          </div>
+
+          <div class="row" style="position:relative; top:20px;">
+              <button style="position:relative; left:5px; float:right; bottom:4px;" class="btn btn-small btn-primary" id="setWorkspace">Set Workspace</button>
+          </div>
+    </div>
+
+    <!-- ################## -->
+    <div class="col-md-6" style="position:relative; top:15px; left:150px; width:600px;">
+        <div id="workspace_warning" class="alert alert-danger alert_style" role="alert">
+          <a href="#" class="alert-link"></a>
+        </div>
+        <div id="workspace_success" class="alert alert-success alert_style" role="alert">
+          <a href="#" class="alert-link"></a>
+        </div>
+    </div>
+
+</div>
+
+<!-- ################################################### Portfolio Table Regiom ################################################### -->
+<div class="row" style="position:relative; left:30px; width:980px; top:30px;">
+        <table class="dataTable cell-border display compact" id="port_table">
+           <thead>
+                <tr>
+                    <th style="width:60px;">Portfolio ID</th>
+                    <th style="width:200px;">Portfolio Name</th>
+                    <th style="width:150px;">Strategy</th>
+                    <th>Description</th>
+                    <th>Fund ID</th>
+                    <th style="width:200px;">Fund Name</th>
+                </tr>
+            </thead>
+            <tbody id="port_table_body">
+            </tbody>
+        </table>  
+</div>
+
+
+<!-- ################################################### Exposure Menu Regiom ################################################### -->
+<div class="row-fluid" style="position:relative; top:40px;">
+    <!-- ################################################### Tab Content Region ################################################### -->
+    <div id="my_portfolio_Tabs"></div>
+    <div style="overflow:visible; position:relative; height:1000px; top:10px;"  id="myPortfolioTabContent" class="nav nav-tabs tab-content"></div>
+</div>
+
+{% endblock %}
+

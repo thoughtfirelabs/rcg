@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block data_manage %} 
+
+{% block css %}
+{{block.super}}
+{% endblock %}
+
+<script type = "text/javascript">
+
+//////////////////////////////////////////////////////////////////////////////////////
+$(document).ready(function(){
+
+	  $('#loading').hide();
+    $('#base_nav li.active').removeClass('active');
+    $('#data_tab').addClass('active');
+    $('#modalContainer').empty()
+
+    ////////////////////////////////////
+    // Control for W2 Tabs
+    $(function () {
+
+        $('#my_dataManage_Tabs').w2tabs({
+            name :'my_dataManage_Tabs',
+            active :'updateData',
+            tabs    : [
+                { id: 'updateData', caption: 'Update Data' },
+                { id: 'findMissingData', caption: 'Find Missing Data' },
+                { id: 'editSecurities', caption: 'Edit Securities' },
+                { id: 'adminData', caption: 'Admin' },
+            ],
+            onClick: function (event) {
+                delegate_data_tab(event.target)
+            }
+        });
+    });
+    // Default Tab
+    delegate_data_tab('updateData')
+ 
+})
+
+///////////////////////////////////////
+function delegate_data_tab(target){
+
+    url_dict = new Array()
+    url_dict['updateData'] = '/templates/data_manage/updateData.html'
+    url_dict['findMissingData'] = '/templates/data_manage/missingSecurities/findMissingData.html'
+    url_dict['editSecurities'] = '/templates/data_manage/editSecurities/editSecurities.html'
+    url_dict['adminData'] = '/templates/data_manage/admin/adminData.html'
+
+    var activeTab;
+    if(typeof(w2ui['my_dataManage_Tabs']) != "undefined"){
+      activeTab = w2ui['my_dataManage_Tabs'].active
+    }
+  
+    var targetDirect = url_dict[target]
+    // For Admin Case - Need to communicate through back end
+    if(target == 'adminData'){
+        $.ajax({
+            url: '/data_manageAdmin/',
+            type: "get",
+            // Need to handle 403 error for permission denied
+            error: function (xhr, ajaxOptions, thrownError) {
+              if(xhr.status==403) {
+                  alert('Permission Denied')
+                  // Move Tab Back to Previous Location
+                  w2ui['my_dataManage_Tabs'].active = activeTab
+                  w2ui['my_dataManage_Tabs'].refresh()
+                  return
+              }
+            },
+            success: function(response) {
+              $('#myDataTabContent').empty()
+              $('#myDataTabContent').html(response)
+            }
+        })
+    }
+    else{
+        $('#myDataTabContent').empty()
+        $('#myDataTabContent').load(targetDirect);
+    }
+}
+
+////////////////////////////////////////
+// Editing Functions Used by Multiple Tabs That Open Modals
+
+//////////////////////////////////////////////////////
+// Opens modal to edit static security data and retrieves this data, populating the fields
+// in the modal.
+function openEditSecurityModal(sec_id){
+
+  $('#modalContainer').remove()
+  $("body").append('<div class="modal fade" role="dialog" style="padding:0px; top:460px; height:920px; width:400px;" id="modalContainer"></div>')
+
+  $('#modalContainer').load('/templates/data_manage/modals/editSecurityModal.html',function(responseTxt, statusTxt, xhr){
+    if(statusTxt == "success") {
+      $('#modalContainer').modal('show');
+      
+      get_security_details(sec_id,function(security_details){
+          if(typeof(security_details['error']) != "undefined"){
+            alert(security_details['error'])
+            return
+          }
+
+          all_instrument_types = get_all_instrument_types(function(all_instrument_types){
+              populateEditSecurityModal(security_details,all_instrument_types)
+          })
+      })
+    }
+
+    if(statusTxt == "error") {
+        alert("Error: " + xhr.status + ": " + xhr.statusText);
+      }
+  });
+
+}
+
+
+//////// Actual API Connection of Saving Backend Data for Single Security
+function saveSecurityData(securityID,save_data,callback){
+
+  save_data=JSON.stringify(save_data)
+  $.ajax({
+        url: '/save_security_details/',
+        type: "get",
+        data: {'security_id':securityID,'data':save_data},
+        success: function(response) {
+            callback(response)
+        }
+  })
+}
+
+ 
+//////////////////////////////////////////////////////
+// Opens modal to add proxy to security data and retrieves this data, populating the fields
+// in the modal.
+function openProxyModal(sec_id) {
+
+    $('#modalContainer').remove()
+    $("body").append('<div class="modal fade" role="dialog" style="padding:0px; height:500px; width:400px;" id="modalContainer"></div>')
+
+    $('#modalContainer').load('/templates/data_manage/modals/addProxyModal.html',function(responseTxt, statusTxt, xhr){
+      if(statusTxt == "success") {
+        $('#modalContainer').modal('show');
+        
+         get_security_details(sec_id,function(security_details){
+
+            if(typeof(security_details['error']) != "undefined"){
+              alert(security_details['error'])
+              return
+            }
+            if(typeof(security_details['rcg_id']) == 'undefined'){
+              alert('Internal error with selected security.')
+              return
+            }
+            if(typeof(security_details['proxy_rcg_id']) != 'undefined' && typeof(security_details['proxy_rcg_id']) != ''){
+              alert('This security already has an associated proxy.  Need to remove this proxy before proceeding.')
+              return
+            }
+            populateAddProxyModal(security_details)
+          })
+      }
+      if(statusTxt == "error") {
+          alert("Error: " + xhr.status + ": " + xhr.statusText);
+      }
+    });
+}
+//////////////////////////////////////////////////////
+// Opens modal to add underlying to security data and retrieves this data, populating the fields
+// in the modal.
+function openUnderlyingModal(sec_id) {
+
+    $('#modalContainer').remove()
+    $("body").append('<div class="modal fade" role="dialog" style="padding:0px; height:500px; width:400px;" id="modalContainer"></div>')
+
+    $('#modalContainer').load('/templates/data_manage/modals/addUnderlyingModal.html',function(responseTxt, statusTxt, xhr){
+      if(statusTxt == "success") {
+        $('#modalContainer').modal('show');
+        
+         get_security_details(sec_id,function(security_details){
+
+            if(typeof(security_details['error']) != "undefined"){
+              alert(security_details['error'])
+              return
+            }
+
+            if(typeof(security_details['rcg_id']) == 'undefined'){
+              alert('Internal error with selected security.')
+              return
+            }
+            if(typeof(security_details['underlying_rcg_id']) != 'undefined' && typeof(security_details['underlying_rcg_id']) != ''){
+              alert('This security already has an associated underlying.  Need to remove this underlying before proceeding.')
+              return
+            }
+            populateAddUnderlyingModal(security_details)
+          })
+      }
+      if(statusTxt == "error") {
+          alert("Error: " + xhr.status + ": " + xhr.statusText);
+      }
+    });
+}
+
+</script>
+
+
+<div class="row-fluid" style="position:relative; top:40px;">
+    <!-- ################################################### Tab Content Region ################################################### -->
+    <div id="my_dataManage_Tabs"></div>
+    <div style="overflow:visible; position:relative; height:1000px; top:10px;"  id="myDataTabContent" ></div>
+</div>
+
+{% endblock %}

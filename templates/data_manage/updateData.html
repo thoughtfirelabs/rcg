@@ -1,0 +1,365 @@
+<script type = "text/javascript">
+
+//////////////////////////////////////////////////////////////////////////////////////
+$(document).ready(function(){
+
+    // Text Fields for Date Selections
+    $("#startDate").datepicker();
+    $("#endDate").datepicker();
+    $('#singleDate').datepicker()
+
+    $('#modalContainer').remove() // Default case when clicking page, ensures modal not visible.
+    clearMissingSecurities()
+
+    // Default Settings
+    disableTextField('startDate')
+    disableTextField('endDate')
+    enableTextField('singleDate')
+
+    $('input.update_check').on('change', function() {
+        $('input.update_check').not(this).prop('checked', false); 
+
+        var checkeIDS = new Array() 
+        $('input.update_check:checked').each(function () {
+          checkeIDS.push($(this).attr('id'))
+
+        })
+        var updateType = checkeIDS[0]
+
+        if(updateType == 'single_date'){
+          disableTextField('startDate')
+          disableTextField('endDate')
+          enableTextField('singleDate')
+        }
+        else{
+          enableTextField('startDate')
+          enableTextField('endDate')
+          disableTextField('singleDate')
+         }   
+    });
+    ////////// Default Date Handling - Uses the Snapshot Date of the Workspace to Generate Default Dates for Start, End and Single
+    getWorkspace(function(port_id,port_name,fund_id,fund_name,snapshot_date,validity){
+
+        $('#singleDate').val(snapshot_date)
+        $('#endDate').val(snapshot_date)
+
+        startDatePieces = snapshot_date.split('/')
+        dd = parseInt(startDatePieces[1])
+        dd = dd - 1 
+        startDate = startDatePieces[0]+'/'+dd+'/'+startDatePieces[2]
+        $('#startDate').val(startDate)
+    })
+
+    /// Button Click Handlers
+    $('#uploadNewData').on('click', function () {
+        uploadNewData()
+    })
+    $('#updateHoldings').on('click', function () {
+        updateHoldings()
+    })
+    $('#generateMissingData').on('click', function () {
+        generateMissingData()
+    })
+
+
+})
+
+//////////////////////////////////////////////////////
+function enableTextField(identifier){
+
+  divname = '#'+String(identifier)
+  $(divname).prop("disabled",false)
+  $(divname).fadeTo(0.2,1.0)
+  $(divname).css({"background-color":"white"})
+  $(divname).css('border-color', 'black');
+}
+//////////////////////////////////////////////////////
+function disableTextField(identifier){
+  divname = '#'+String(identifier)
+  $(divname).prop("disabled",true)
+  $(divname).fadeTo(0.2,0.7)
+  $(divname).css({"background-color":"#D3D3D3"})
+  $(divname).css('border-color', 'gray');
+
+}
+
+//////////////////////////////////////////////////////
+// Updates holdings and then uses the updated holding models to generate stage 1 missing
+// securities for display.
+function updateHoldings(){
+
+  singleDate = $('#singleDate').val()
+  startDate = $('#startDate').val()
+  endDate = $('#endDate').val()
+
+  foundError = validateDates(startDate, endDate, singleDate)
+  if(foundError){
+    alert('Error : Invalid Dates for Holdings Update')
+    return
+  }
+
+  // Determine Update Type (Range or single day)
+  var checkeIDS = new Array() 
+  $('input.update_check:checked').each(function () {
+    checkeIDS.push($(this).attr('id'))
+  })
+  var refreshType = checkeIDS[0]
+
+  $.ajax({
+      type: "GET",
+      url: '/updateHoldings/',
+      data:{'startDate':startDate,'endDate':endDate,'singleDate':singleDate,'refreshType':refreshType},
+      error: function(data){
+        alert("Error:  Unknown Error");
+      },
+      success: function(data){
+          
+          responseMessage = JSON.parse(data)['responseMessage']
+          alert('Done')
+          return
+          // alert('Checking for missing security information from update.')
+
+          // // Get Missing Securities Based on Holding Update Performed
+          // getHoldingMissingSecurities(startDate,endDate,singleDate,refreshType,function(missingSecurityData){
+
+          //     missingSecurities = JSON.parse(missingSecurityData)['missingSecurities']
+          //     instrumentTypes = JSON.parse(localStorage.getItem('all_instrument_types'))
+          //     if(typeof(instrumentTypes) == "undefined"){
+          //       retrieveBaseData()
+          //     }
+
+          //     clearMissingSecurities()
+          //     if(Object.keys(missingSecurities).length === 0){
+          //       alert('No Missing Securities')
+          //       return
+          //     }
+          //     // Use Missing Security Data to Show HTML Field of Securities that Need Info
+          //     generateMissingSecurityHTML(missingSecurities,instrumentTypes)
+
+          //})
+      }
+  })
+}
+
+//////////////////////////////////////////////////////
+// Generate and Download Missing Data Reports
+function generateMissingData (){
+
+  singleDate = $('#singleDate').val()
+  startDate = $('#startDate').val()
+  endDate = $('#endDate').val()
+  
+  foundError = validateDates(startDate, endDate, singleDate)
+  if(foundError){
+    alert('Error : Invalid Dates for Missing Data Generation')
+    return
+  }
+  // Determine Update Type (Range or single day)
+  var checkeIDS = new Array() 
+  $('input.update_check:checked').each(function () {
+    checkeIDS.push($(this).attr('id'))
+
+  })
+  var refreshType = checkeIDS[0]
+  
+  /// AJAX Call to Download Exposure Report
+  staticFile = $.ajax({
+        url:'/generateMissingData/',
+         type: "get",
+         data:{'startDate':startDate,'endDate':endDate,'singleDate':singleDate,'dataType':'static','refreshType':refreshType},
+         error: function(data){
+            alert("Error:  Unknown Error");
+          },
+
+         success: function(response) {
+            
+              // Download File
+              var fileName = staticFile.getResponseHeader('fileName')
+
+              var blob=new Blob([response]);
+              var link=document.createElement('a');
+              link.href=window.URL.createObjectURL(blob);
+              link.download=fileName
+              link.click();
+
+              // Retrieve Dynamic File
+              dynamicFile = $.ajax({
+                  url:'/generateMissingData/',
+                   type: "get",
+                   data:{'startDate':startDate,'endDate':endDate,'singleDate':singleDate,'dataType':'dynamic','refreshType':refreshType},
+                   error: function(data){
+                      alert("Error:  Unknown Error");
+                    },
+
+                   success: function(response) {
+                        // Download File
+                        var fileName = dynamicFile.getResponseHeader('fileName')
+                        // Error message will return a string format response
+                        if(typeof(fileName)=='undefined'){
+                          alert(response)
+                          return
+                        }
+
+                        var blob=new Blob([response]);
+                        var link=document.createElement('a');
+                        link.href=window.URL.createObjectURL(blob);
+                        link.download=fileName
+                        link.click();
+                      }
+                      
+                   })
+        }
+      })
+            
+}
+
+//////////////////////////////////////////////////////
+// Uploads new data from CSV files to store in the static and dynamic database.
+function uploadNewData(){
+
+  /////////////// Static Update //////////////////////////////////////////
+  $.ajax({
+      type: "GET",
+      url: '/updateStatic/',
+      data:{'command':'update'},
+      error: function(data){
+        alert("Unknown Error");
+      },
+      success: function(response){
+
+        responseData = JSON.parse(response)['response']
+        alertString = ""
+        if(typeof(responseData['success'])!="undefined"){
+          alertString = alertString + responseData['success']
+        }
+
+        if(typeof(responseData['error']) != "undefined"){
+          alertString = alertString + "\n" + responseData['error']
+        }
+        alert(alertString)
+
+        /////////////// Dynamic Update //////////////////////////////////////////
+        dynamicConfirmation = window.confirm('Would you like to update the dynamic data as well?')
+        if(dynamicConfirmation){
+              $.ajax({
+                  type: "GET",
+                  url: '/updateDynamic/',
+                  data:{'command':'update'},
+                  error: function(data){
+                    alert("Unknown Error");
+                  },
+                  success: function(response){
+                    responseData = JSON.parse(response)['response']
+                    alertString = ""
+                    if(typeof(responseData['success'])!="undefined"){
+                      alertString = alertString + responseData['success']
+                    }
+
+                    if(typeof(responseData['error']) != "undefined"){
+                      alertString = alertString + "\n" + responseData['error']
+                    }
+                    /////////////// Cleanup //////////////////////////////////////////
+                    cleanupConfirmation = window.confirm('Would you like to cleanup the dynamic data to ensure there are no duplicates (Recommended)?')
+                    if(cleanupConfirmation){
+                        $.ajax({
+                            type: "GET",
+                            url: '/cleanupDynamic/',
+                            error: function(data){
+                              alert("Unknown Error");
+                            },
+                            success: function(response){
+                              alert(response)
+                            }
+                        })
+                    }
+                  }
+              })
+          }
+      }
+    })
+}
+
+</script>
+
+
+<!-- ################################################### Edit Securities Region ################################################### -->
+<div class="row" style="position:relative; left:15px; width:100%; margin-left:-10px; top:15px;">
+    <div class="col-md-12"> 
+
+        <div class="col-md-9">
+
+            <div class="row">
+
+              <div class="row">
+                  <h2 style="font-size:16px">Update Data<span style="color:#b92429">.</span></h2>
+              </div>
+
+              <!-- ################### Column 1 ######################### -->
+              <div class="col-md-3" style="position:relative; left:-25px;">
+
+                    <div class="row" style="position:relative; width:280px; left:10px; top:15px;">
+                        <div class="col-lg-8" style="font-family: 'Roboto', sans-serif; font-size:10px; font-weight: bold;">
+                              <input class="update_check" type="checkbox" id="between_dates">Range of Dates<br>
+                              <input class="update_check" type="checkbox" id="single_date" checked> Single Date <br>
+                        </div>
+                    </div>
+
+                    <!-- ######################################################## -->
+                    <div class="row" style="position:relative; left:10px; width:180px; top:25px;">
+
+                        <!-- ######################################################## -->
+                          <div id = "holding_date_range" style="position:relative; left:30px; top:10px;">
+
+                              <div class="row">
+                                  
+                                  <!-- ######################################################## -->
+                                  <div class="row">
+                                      <div class="col-md-6"><p>Start Date:</p></div>
+                                      <div class="col-md-6"><input readonly style="background-color:#FFFFFF" type="text" id="startDate"></input></div>
+                                  </div>
+
+                                  <!-- ######################################################## -->
+                                  <div class="row" style="position:relative; top:10px;">
+                                      <div class="col-md-6"><p>End Date:</p></div>
+                                      <div class="col-md-6"><input readonly style="background-color:#FFFFFF" type="text" id="endDate"></input></div>
+                                  </div>
+
+                                  <!-- ######################################################## -->
+                                  <div class="row" style="position:relative; top:20px;">
+                                      <div class="col-md-6"><p>Single Date:</p></div>
+                                      <div class="col-md-6"><input readonly style="background-color:#FFFFFF" type="text" id="singleDate"></input></div>
+                                  </div>
+
+                              </div>
+                          
+                          </div>
+                    
+                    </div>
+                </div>
+
+              <!-- ############################################### Col 2 ############################## -->
+              <div class="col-md-3" style="position:relative; left:30px; top:45px; width:290px;">
+
+                  <div class="row">
+                    <div class="row">
+                        <button id="updateHoldings" style="position:relative; top:20px; width:200px; height:20px;"> Update State Street Holdings </button>
+                    </div>
+                    <div class="row">
+                        <button id="generateMissingData" style="position:relative; top:35px; width:200px; height:20px;"> Generate Missing Data Reports </button>
+                    </div>
+                    <div class="row">
+                        <button id="uploadNewData" style="position:relative; top:50px; width:200px; height:20px;"> Upload New Static/Dynamic</button>
+                    </div>
+                  </div>
+              </div>
+
+          </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ################################################### Missing Securities Region ################################################### -->
+<div class="row" id="missingSecurities" style="position:relative; overflow-y: scroll; height:1000px; width:1200px; top:100px; left:20px;">

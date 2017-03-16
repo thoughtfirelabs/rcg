@@ -1,0 +1,304 @@
+<!DOCTYPE html>  
+<html lang="en">  
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="author" content="Nick Florin">
+    <meta name="apple-mobile-web-app-capable" content="yes" />  
+
+
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.js"></script>
+    <script type="text/javascript" src="http://w2ui.com/src/w2ui-1.4.min.js"></script>
+
+
+    {% block google_src %}
+
+    <script type='text/javascript' src='https://www.google.com/jsapi'></script>
+    <script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>
+    <script src="/modules/jquery-modal/jquery.modal.min.js"></script>
+    
+
+    {% endblock %}
+
+    {% block css %}
+
+<!--     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/table_style.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/css/w2ui.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/css/base.css">
+    <link rel="stylesheet" href="/modules/jquery-modal/jquery.modal.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="/static/css/modal.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/RobotoCondensed.css"/> -->
+
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/login.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/table_style.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/css/w2ui.css"/>
+    <link rel="stylesheet" href="/modules/jquery-modal/jquery.modal.css" type="text/css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="/static/css/base.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/RobotoCondensed.css"/>
+    
+    {% endblock %}
+
+    <script type = "text/javascript">
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    $(document).ajaxStart(function() {
+          $('#loading').show();
+    });
+    $(document).ajaxStop(function() {
+          $('#loading').hide();
+    });
+
+    // Get Authenticated User
+    $(document).ready(function(){
+
+        // Get initialization data
+        retrieveBaseData()
+
+        // Get Authenticated User
+        $.ajax({
+              url:'getAuthenticatedUser/',
+               type: "get",
+               success: function(response) {
+                  var username = response
+                  $('#username').html(username)
+              }
+        })
+    })
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Retrieves Data from Back End That is Stored to Local Storage When Application Switches Pages
+    // or Launches
+    function retrieveBaseData(){
+
+      get_all_instrument_types(function(all_instrument_types){
+          all_instrument_types = JSON.stringify(all_instrument_types) // Store as JSON String
+          localStorage.setItem('all_instrument_types',all_instrument_types)
+      })
+      get_all_sectors(function(all_sectors){
+          all_sectors = JSON.stringify(all_sectors) // Store as JSON String
+          localStorage.setItem('all_sectors',all_sectors)
+      })
+      get_all_country_codes(function(all_country_codes){
+          all_country_codes = JSON.stringify(all_country_codes) // Store as JSON String
+          localStorage.setItem('all_country_codes',all_country_codes)
+      })
+      get_all_country_names(function(all_country_names){
+          all_country_names = JSON.stringify(all_country_names) // Store as JSON String
+          localStorage.setItem('all_country_names',all_country_names)
+      })
+    }
+
+    //// Gets all of the possible instrument types that we can use.
+    // One of the Possible Functions Caled in retrieveBaseData
+    function get_all_instrument_types(callback){
+      $.ajax({
+            url: '/get_all_instrument_types/',
+            type: "get",
+            success: function(response) {
+                var instrument_types = JSON.parse(response)['instrument_types']
+                instrument_types.unshift('None') // Put None in First Item of List
+                console.log(instrument_types) 
+                callback(instrument_types)
+            }
+        })
+    }
+
+    //// Gets all of the possible sectors that we can use.
+    // One of the Possible Functions Caled in retrieveBaseData
+    function get_all_sectors(callback){
+      $.ajax({
+            url: '/get_all_sectors/',
+            type: "get",
+            success: function(response) {
+                var sectors = JSON.parse(response)['sectors']
+                sectors.unshift('None') // Put None in First Item of List
+                console.log(sectors)
+                callback(sectors)
+            }
+        })
+    }
+
+    function get_all_country_names(callback){
+      $.ajax({
+            url: '/get_all_country_names/',
+            type: "get",
+            success: function(response) {
+                var countryNames = JSON.parse(response)['countryNames']
+                countryNames.unshift('None') // Put None in First Item of List
+                console.log(countryNames)
+                callback(countryNames)
+            }
+        })
+    }
+
+    function get_all_country_codes(callback){
+      $.ajax({
+            url: '/get_all_country_codes/',
+            type: "get",
+            success: function(response) {
+                var countryCodes = JSON.parse(response)['countryCodes']
+                countryCodes.unshift('None') // Put None in First Item of List
+                console.log(countryCodes)
+                callback(countryCodes)
+            }
+        })
+    }
+
+
+
+     
+    /////////////////////////////////////////
+    // Hides the data alerts that show missing data until they are ready to be shown.
+    function hideDataAlerts(){
+
+        $('#data_success').hide()
+        $('#data_warning').hide()
+        $('#assumptions_success').hide()
+        $('#assumptions_warning').hide()
+        $('#definitions_warning').hide()
+        $('#definitions_success').hide()
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////////
+    </script>
+
+  </head>
+  <body>
+
+
+   <div class="container-fluid">
+
+  <!-- RCG Header -->
+    <div class="row-fluid rcg-header">
+      <div class="span7" style="position:relative; top:0px; font-size:1.2em;">
+        <div class='rcg-logo'>The Rock Creek Group <span class='app-name'>{% block title%}{% endblock %}</span></div> 
+      </div>  
+
+      <div class="span5 rcgworldheader login-nav" style="position:relative; top:0px; font-size:0.8em;"></div>
+
+    </div>
+
+     <div class="row-fluid" style="position:relative; top:0px;">
+          <div class="span12 navy-bar"></div>
+     </div>
+
+      <!-- Main Tab Area -->
+
+      <div class="row">
+
+          <!-- Tab Navigation Column -->
+          <div class="col-md-5" style="min-width:600px;">
+
+              <div style="position:relative; left:-40px; top:6px;">
+                <ul id="base_nav" class="nav nav-pills">
+                  <li id="data_tab"><a class="nav-link" href="/data_manage">Data Manage</a></li>
+                  <li id="fund_level_tab"><a class="nav-link" href="/fund_level">Manager Level</a></li>
+                  <li id="portfolio_level_tab"><a class="nav-link active" href="/">Portfolio Level</a></li> 
+                  <li id="holding_level_tab"><a class="nav-link" href="/holding_level">Holdings Level</a></li>
+                  <li id="reporting_tab"><a class="nav-link" href="/reporting_level">Reporting</a></li>
+                </ul>
+              </div> 
+
+          </div> 
+          
+          <!-- Logout Column -->
+          <div class="col-md-7" style="min-width:600px;">
+              
+                <div class="col-sm-8" style="position:relative; left:-50px;">
+                </div>
+
+                <div class="col-sm-4" style="position:relative; left:-50px;">
+
+
+                      <!-- ########## Displays the username for the authenticated user and the logout button######### -->
+                      <div id = "authenticatedUserIndicator">
+
+                        <form method="post" action="{% url 'logout' %}">
+                            <div class="row" style="position:relative;  top:8px;">
+
+                              <!-- ############################## -->
+                              <div class="col-sm-8" style="position:relative;">
+                                  <div class = "row" style="position:relative; top:4px;">
+                                    <div class="col-sm-6"><p>Username : </p></div>
+                                    <div class="col-sm-6"><p id = "username"></p></div>
+                                  </div>
+                              </div>
+                              <!-- ############################## -->
+                              <div class="col-md-4">
+                                  <div>
+                                    <input type="submit" style="position:relative; width:80px;" value="Logout" />
+                                    <input type="hidden" name="next" value="" />
+                                  </div>
+                              </div>
+                            </div>
+                        </form>
+                      </div>
+
+                  </div>
+          </div> 
+      </div> 
+
+      <div class="row-fluid" style="position:relative; top:-10px;">
+         <div class="span12 navy-bar"></div>  
+     </div>  
+
+
+      <!-- Content -->
+      <div style="position:relative; top:-15px;">
+      
+      {% block login %} {% endblock %}
+      {% block logged_out %} {% endblock %}
+
+      {% block data_manage %} {% endblock %}
+      {% block portfolio_level %} {% endblock %}
+      {% block fund_level %} {% endblock %}
+      {% block holding_level %} {% endblock %}
+      {% block reporting_level %} {% endblock %}
+      </div>
+
+    </div>
+
+    <!-- JavaScript scripts -->
+    {% block js %}
+
+    <script src="/modules/tether-1.3.3/dist/js/tether.min.js"></script>
+    <script src="/modules/chart.js/dist/Chart.js"></script>
+    <script src="/modules/bootstrap-checkbox-1.4.0/dist/js/bootstrap-checkbox.min.js" defer></script>
+
+    <script src="/modules/d3/d3.js"></script>
+    <script src="/modules/nvd3/build/nv.d3.min.js"></script>
+    <script src="/modules/datatables.net/js/jquery.dataTables.js"></script>
+    <script src="/static/js/utilities.js"></script>
+    <script src="/static/js/chartUtilities.js"></script>
+    <script src="/modules/bootstrap/dist/js/bootstrap.min.js"></script>
+
+    <script src="/templates/utilities/download.js"></script>
+    <script src="/templates/utilities/workspace.js"></script>
+
+    <script src="/templates/portfolio_level/apiCalls.js"></script>
+    <script src="/templates/fund_level/apiCalls.js"></script>
+    <script src="/templates/holding_level/apiCalls.js"></script>
+
+  
+    <script src="/templates/reporting_level/limitReport/tableUtilities.js"></script>
+    <script src="/templates/holding_level/tableUtilities.js"></script>
+
+    <script src="/templates/data_manage/apiCalls.js"></script>
+    <script src="/templates/data_manage/utilities.js"></script>
+    <script src="/templates/data_manage/missingSecurities/utilities.js"></script>
+    <script src="/templates/data_manage/missingSecurities/htmlUtilities.js"></script>
+    {% endblock %}
+
+
+    <div id="loading" class="load_div" style="position:fixed">
+    </div>
+    
+  </body>
+
+
+</html>  

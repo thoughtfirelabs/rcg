@@ -1,0 +1,58 @@
+<script type = "text/javascript">
+
+////////////////////////////////////
+$(document).ready(function(){
+
+    hideDataAlerts()
+    $('#fund_analysis_nav li.active').removeClass('active');
+    $('#exposure_tab').addClass('active');
+
+    ////////////////////////////////////
+    // Control for W2 Tabs
+    $("#my_exposure_Tabs").w2destroy("my_exposure_Tabs");
+    $(function () {
+        $('#my_exposure_Tabs').addClass('small')
+        $('#my_exposure_Tabs').w2tabs({
+
+            name :'my_exposure_Tabs',
+            active :'fund_manager_exposure',
+            tabs    : [
+                { id: 'fund_manager_exposure', caption: 'Manager & Strategy Exposure' },
+                { id: 'fund_geographic_exposure', caption: 'Geographic Exposure' },
+                { id: 'fund_instrument_exposure', caption: 'Instrument & Asset Exposure' },
+                { id: 'fund_sector_exposure', caption: 'Sector & Industry Exposure' },
+            ],
+            onClick: function (event) {
+                delegate_exposure_tab(event.target)
+            }
+        });
+    });
+    // Default Tab on Load
+    delegate_exposure_tab('fund_manager_exposure')
+})
+////////////////////////////////////
+function delegate_exposure_tab(target){
+
+    url_dict = new Array()
+    url_dict['fund_instrument_exposure'] = '/templates/fund_level/fund_exposure_instrument.html'
+    url_dict['fund_geographic_exposure'] = '/templates/fund_level/fund_exposure_geographic.html'
+    url_dict['fund_sector_exposure'] = '/templates/fund_level/fund_exposure_sector.html'
+    url_dict['fund_manager_exposure'] = '/templates/fund_level/fund_exposure_manager.html'
+
+    var targetDirect = url_dict[target]
+
+    $('#myExposureTabContent').empty()
+    $('#myExposureTabContent').load(targetDirect);
+}
+
+</script>
+
+<!-- ################################################### Exposure Menu Regiom ################################################### -->
+<div class="row-fluid" style="position:absolute; top:20px;">
+    <!-- ################################################### Tab Content Region ################################################### -->
+    <div id="my_exposure_Tabs"></div>
+    <div style="overflow:visible; position:relative; height:1200px; top:10px;"  id="myExposureTabContent" class="nav nav-tabs tab-content"></div>
+</div>
+
+
+

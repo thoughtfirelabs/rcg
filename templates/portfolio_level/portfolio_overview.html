@@ -1,0 +1,314 @@
+<script type = "text/javascript">
+
+///////////////////////////////////////////////////////////////////////////////
+$(document).ready(function(){
+
+    hideDataAlerts()
+
+    $('#missing_data_table_row').hide()
+    $('#portfolio_analysis_nav li.active').removeClass('active');
+    $('#overview_tab').addClass('active');
+        
+    //////////////////////////////////////////////
+    // Add Click Handler for Setting Workspace
+    $('#setWorkspace').on('click', function () {
+      setWorkspaceDate($('#snapshot_date').val(),function(port_id,port_name,fund_id,fund_name,snapshot_date,validity){
+
+          // Populate Workspace Data
+          populateWorkspaceData(port_id,port_name,snapshot_date,validity)
+
+          if(validity){
+              get_portfolio_overview(function(overview_data,error_data){
+                // Handle Error Report Data
+                handle_data_report(error_data,true)
+                // Handle Overview Data
+                populateOverviewData(overview_data)
+              })
+          }
+      })
+    })
+    
+    /////////////////////////////
+    // Click Handlers for Portfolio Table
+    $("#port_table").delegate("tr", "click", function(){
+        $(this).parent().children().each(function() {
+            $(this).removeClass('row_selected')
+        });
+        $(this).addClass('row_selected')
+        var port_id = $('#port_table tr.row_selected').find("td:first").html();
+        
+        // Setworkspace Portfolio with Callback Function to Get Portfolio Overview
+        setWorkspacePortfolio(port_id,function(port_id,port_name,snapshot_date,validity){
+          // Populate Workspace Data
+          populateWorkspaceData(port_id,port_name,snapshot_date,validity)
+          if(validity){
+
+              get_portfolio_overview(function(overview_data,error_data){
+                // Handle Error Report Data
+                handle_data_report(error_data,true)
+                // Handle Overview Data
+                populateOverviewData(overview_data)
+                
+              })
+          }
+        })
+
+    });
+    
+    // Default call on page load
+    // Get Workspace Portfolio and Populate Information After Data Passed Back in Callback
+    getWorkspace(function(port_id,port_name,fund_id,fund_name,snapshot_date,validity){
+        populateWorkspaceData(port_id,port_name,snapshot_date,validity)
+        // Get Portfolio Overview if Workspace is Valid
+        if(validity){
+          get_portfolio_overview(function(overview_data,error_data){
+              // Handle Error Report Data
+              handle_data_report(error_data,true)
+              // Handle Overview Data
+              populateOverviewData(overview_data)
+              higlightPortfolioTable(port_id)
+          })
+        }
+    })
+});
+
+//////////////////////////////////////////////////
+function populateWorkspaceData(port_id,port_name,snapshot_date,validity){
+
+    // Handle Workspace Response Data
+    document.getElementById("port_name_header").innerHTML = port_id + " - " + port_name
+    document.getElementById("selectedPortfolio").value = port_id
+
+    $('#snapshot_date').val(snapshot_date)
+    $('#selectedPortfolio').val(port_id)
+
+    if(validity){
+      animateWorkspaceSuccess()
+      return
+    }
+    else{
+      animateWorkspaceError()
+      handle_missing_data()
+      return
+    }
+
+}
+//////////////////////////////////////////////////
+function populateOverviewData(overview_data){
+
+    $('#num_positions').val(overview_data['num_positions'])
+    $('#earliestDynamicDate').val(overview_data['earliestDynamicDate'])
+
+    $('#market_val').val(overview_data['market_val'].formatMoney(2))
+    $('#beta_msci').val(overview_data['beta_msci'].toFixed(2))
+    $('#beta_sp500').val(overview_data['beta_sp500'].toFixed(2))
+    
+    $('#gross_custom_notional').val(overview_data['custom_notional_exposure_gross'].formatMoney(2))
+    $('#long_custom_notional').val(overview_data['custom_notional_exposure_long'].formatMoney(2))
+    $('#short_custom_notional').val(overview_data['custom_notional_exposure_short'].formatMoney(2))
+    $('#net_custom_notional').val(overview_data['custom_notional_exposure_net'].formatMoney(2))
+
+    // Draw Chart
+    chart_data = new Array()
+    chart_data['Long']= overview_data['custom_notional_exposure_long']
+    chart_data['Short']= overview_data['custom_notional_exposure_short']
+
+    donut_pieces = create_donut_chart(300,300,chart_data)
+    chart = donut_pieces[0]
+    chart_data = donut_pieces[1]
+    legend = donut_pieces[2].width(300)
+    legend = legend.padding(20)
+    legend_data = donut_pieces[3]
+
+    d3.select('#long_short_chart svg')
+        .datum([chart_data])
+        .transition().duration(500)
+        .call(chart);
+
+    d3.select('#long_short_legend svg')
+        .datum(legend_data)
+        .call(legend);
+
+    nv.addGraph(chart)
+            
+}
+///////////////////////////////////////////////////////////////////////////////
+// Text Field Behaviors for Missing Data in Holdings Table
+function handle_missing_data(){
+
+  var text_fields = ['#num_positions','#market_val','#gross_custom_notional','#net_custom_notional','#long_custom_notional','#short_custom_notional','#beta_sp500','#beta_msci','#revised_beta_msci']
+  for(var i = 0; i<text_fields.length; i++){
+    $(text_fields[i]).val('Error : Invalid Workspace')
+  }
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+</script>
+
+<!-- ################################################### General Region ################################################### -->
+<h5 style="position:relative; top:5px;" id="port_name_header"> Portfolio Name </h5>
+
+<div class="row" style="width:1200px;">
+
+  <!-- ################################################### Number Output Column ################################################### -->
+  <div class="col-sm-4">
+    <!-- ################## -->
+    <div class="row" style="position:relative; left:20px; width:400px; top:20px;">
+        
+          <div class="col-sm-6">
+            <label for="num_positions">Number of Positions</label>
+            <input readonly type="text" style="color:black; background-color:#FFF" id="num_positions" placeholder="Missing Data">
+          </div>
+          <div class="col-sm-6">
+            <label for="market_val">Current Market Value</label>
+            <input readonly type="text" style="color:black; background-color:#FFF" id="market_val" placeholder="Missing Data">
+          </div>
+    </div>
+    <!-- ################## -->
+    <div class="row" style="position:relative; left:20px; width:400px; top:40px;">
+        
+          <div class="col-sm-6">
+            <label for="beta_sp500">Beta to S&P 500</label>
+            <input readonly type="text" style="color:black; background-color:#FFF" id="beta_sp500" placeholder="Missing Data">
+          </div>
+          <div class="col-sm-6">
+            <label for="beta_msci">Beta to MSCI</label>
+            <input readonly type="text" style="color:black; background-color:#FFF" id="beta_msci" placeholder="Missing Data">
+          </div>
+    </div>
+    <br>
+    <!-- ################## -->
+    <div class="row" style="position:relative; left:20px; width:400px; top:60px;">
+        
+          <div class="col-sm-6">
+            <label for="gross_custom_notional">Gross Custom Notional Exposure</label>
+            <input readonly type="text" style="color:black; background-color:#FFF" id="gross_custom_notional" placeholder="Missing Data">
+          </div>
+
+          <div class="col-sm-6">
+            <label for="net_custom_notional">Net Custom Notional Exposure</label>
+            <input readonly type="text" style="color:black; background-color:#FFF" id="net_custom_notional" placeholder="Missing Data">
+          </div>
+
+    </div>
+    <!-- ################## -->
+    <div class="row" style="position:relative; left:20px; width:400px; top:80px;">
+        
+          <div class="col-sm-6">
+            <label for="long_custom_notional">Long Custom Notional Exposure</label>
+            <input readonly type="text" style="color:black; background-color:#FFF" id="long_custom_notional" placeholder="Missing Data">
+          </div>
+          <div class="col-sm-6">
+            <label for="short_custom_notional">Short Custom Notional Exposure</label>
+            <input readonly type="text" style="color:black; background-color:#FFF" id="short_custom_notional" placeholder="Missing Data">
+          </div>
+    </div>
+
+    <div class="row" align="center" id='long_short_chart' style="position:relative; left:20px; width:400px; top:120px;">
+        <svg class="nvd" style="position:relative; height:320px; width:360px;"> </svg>
+    </div>
+
+    <div class="row" style="position:relative; top:80px;">
+        <div id="long_short_legend">
+            <svg class="nvd" style="position:relative;"> </svg>
+        </div>
+    </div>
+
+
+  </div>
+
+  <!-- ################################################### Missing Data Column ################################################### -->
+  <div class="col-sm-8" style="position:relative; left:30px;">
+
+        <div class="row" style="height:100px; width:600px;">
+
+            <!-- ################## -->
+            <div class="row" style="position:relative; left:20px; width:400px; top:20px;">
+                
+                  <div class="col-sm-6">
+                    <label for="earliestDynamicDate">Earliest Date of Data</label>
+                    <input readonly type="text" style="color:black; background-color:#FFF" id="earliestDynamicDate" placeholder="Earliest Date of Data Used">
+                  </div>
+
+                  <div class="col-sm-6">
+                  </div>
+
+            </div>
+
+
+        </div>
+
+        <div class="row" style="position:relative; left:30px; width:600px;">
+
+            <!-- ################## -->
+            <div class="row" style="width:600px;">
+                <div id="data_warning" class="alert alert-danger alert_style" role="alert">
+                  <a href="#" class="alert-link"></a>
+                </div>
+            </div>
+
+            <!-- ################## -->
+            <div class="row" style="width:600px;">
+                <div id="data_success" class="alert alert-success alert_style" role="alert">
+                  <a href="#" class="alert-link"></a>
+                </div>
+            </div>
+
+            <!-- ################## -->
+            <div id="missing_data_table_row" class="row" style="position:relative; left:0px; top:5px;">
+                    <table class="dataTable cell-border display compact table_small" id="missing_data_table">
+                       <thead>
+                            <tr>
+                                <th style="width:100px;">Security ID</th>
+                                <th>Security Name</th>
+                                <th style="width:100px;">Instrument</th>
+                                <th style="width:160px;">Missing Field</th>
+                            </tr>
+                        </thead>
+                        <tbody id="missing_data_table_body">
+                        </tbody>
+                    </table>  
+            </div>
+
+            <!-- ################## -->
+            <div class="row" style="width:600px;" style="position:relative; left:0px; top:15px;">
+                <div id="assumptions_success" class="alert alert-success alert_style" role="alert">
+                  <a href="#" class="alert-link"></a>
+                </div>
+            </div>
+
+            <!-- ################## -->
+            <div class="row" style="width:600px;" style="position:relative; left:0px; top:15px;">
+                <div id="assumptions_warning" class="alert alert-warning alert_style" role="alert">
+                  <a href="#" class="alert-link"></a>
+                </div>
+            </div>
+
+            <!-- ################## -->
+            <div id="assumption_table_row" class="row" style="position:relative; left:0px; top:5px;">
+                    <table class="dataTable cell-border display compact table_small" id="assumption_data_table">
+                       <thead>
+                            <tr>
+                                <th style="width:100px;">Security ID</th>
+                                <th style="width:220px;">Security Name</th>
+                                <th style="width:100px;">Instrument</th>
+                                <th style="width:100px;">Field</th>
+                                <th style="width:100px;">Assumption</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assumption_data_table_body">
+                        </tbody>
+                    </table>  
+            </div>
+
+        </div>
+
+  </div>
+  <!-- ################################################### Missing Data Column End ################################################### -->
+
+</div>
+<!-- ################################################### Row End ################################################### -->
+
+    

@@ -1,0 +1,137 @@
+<script type = "text/javascript">
+
+////////////////////////////////////
+$(document).ready(function(){
+
+	$('#port_analysis_nav li.active').removeClass('active');
+    $('#daily_metrics_tab').addClass('active');
+
+    $( "#start_date" ).datepicker();
+	$( "#end_date" ).datepicker();
+
+
+	////////////////////////////////////
+    // Exposure Type Toggle Handlers
+    $('#render_chart').on('click', function () {
+
+        var port_id = $('#port_table tr.highlighted').find("td:first").html();
+        var end_date = $( "#end_date" ).val()
+        var start_date = $( "#start_date" ).val()
+        
+        var metric = $("#metric_select option:selected").attr('id')
+    	var chart_type = $("#chart_select option:selected").attr('id')
+     	render_chart(port_id,metric,chart_type,start_date,end_date)
+    })
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // Temporary Fix for Default Loading Exposures for Second Fund
+    temp_default_portfolio = 'X9JFC01C'
+    temp_default_portfolio_name = 'Mellon Capital Sub-Adviser 40 Act'
+    temp_default_startdate = '8/1/16'
+    temp_default_enddate = '9/3/16'
+
+    $('#start_date').val(temp_default_startdate)
+    $('#end_date').val(temp_default_enddate)
+    $('#selected_portfolio').val(temp_default_portfolio)
+
+	document.getElementById("port_name_header").innerHTML = temp_default_portfolio + " - " + temp_default_portfolio_name
+    $('#loading').hide();
+})
+
+///////////////////////////////////////////////////////////////////////////////
+function render_chart(port_id,metric,chart_type,start_date,end_date){
+	$('#loading').show()
+
+    $.ajax({
+        url:'get_port_custom_exposure_daily_chart_data/',
+         type: "get",
+         data: {'port_id':port_id,'metric':metric,'start_date':start_date,'end_date':end_date},
+         success: function(response) {
+         	
+         	chart_data = JSON.parse(response)['chart_data']
+         	time_series_unix = chart_data['time_series_unix']
+         	time_series_string = chart_data['time_series_string']
+
+         	// Create Bar Chart With Utilities Function
+         	chart_stuff = create_bar_chart(600,1000,time_series_string,true)
+         	chart=chart_stuff[0]
+         	chart_data=chart_stuff[1]
+         	
+         	// Use Chart Data and Chart to Populate SVG
+         	d3.select('#chart svg')
+          		.datum(chart_data)
+          		.transition().duration(500)
+          		.call(chart);
+
+         	nv.addGraph(chart)
+
+            $('#loading').hide()
+
+         }
+      })
+}
+</script>
+
+<!-- ################################################### General Region ################################################### -->
+<h5 style="position:relative; top:15px;" id="port_name_header"> Portfolio Name </h5>
+
+<!-- ################################################### Render Region ################################################### -->
+<div style="width:1000px; position:relative; top:5px;">
+
+	<div style="position:relative; left:20px; top:20px;">
+
+		<div style="width:400px;" align="right">
+
+			<div style="position:relative; top:10px;">
+	    		<label align="right">Selected Portfolio:
+	    		<input style="position:relative; left:20px; float:right" type="text" id="selected_portfolio"></input>
+	    		</label> 
+			</div>
+			<div style="position:relative; top:20px;">
+	    		<label align="right">Start Date:
+	    		<input style="position:relative; left:20px; float:right" type="text" id="start_date"></input>
+	    		</label> 
+			</div>
+			<div style="position:relative; top:30px;">
+	    		<label>End Date:
+	    		<input style="position:relative; left:20px; float:right" type="text" id="end_date"></input>
+	    		</label> 
+			</div>
+
+		</div>
+
+		<div style="position:relative; top:10px;">
+			<select id="metric_select" style="position:relative; top:35px; height:30px; width:200px;">
+				<option value="gross_option" id="custom_gross_option">Custom Gross Exposure</option>
+				<option value="long_option" id="custom_long_option">Custom Long Exposure</option>
+				<option value="short_option" id="custom_short_option">Custom Short Exposure</option>
+				<option value="net_option" id="custom_net_option">Custom Net Exposure</option>
+				<option value="gross_option" id="gross_option">Delta Adj. Gross Exposure</option>
+				<option value="long_option" id="long_option">Delta Adj. Long Exposure</option>
+				<option value="short_option" id="short_option">Delta Adj. Short Exposure</option>
+				<option value="net_option" id="net_option">Delta Adj. Net Exposure</option>
+				<option value="gross_option" id="gross_option">Daily Returns</option>
+				<option value="beta_msci_option" id="long_option">Beta MSCI</option>
+				<option value="beta_sp500_option" id="short_option">Beta S&P 500</option>
+			</select>
+
+			<select id="chart_select" style="position:relative; top:35px; height:30px; width:200px;">
+				<option value="bar_option" id="bar_option">Bar Chart</option>
+				<option value="area_option" id="area_option">Area Chart</option>
+				<option value="line_option" id="line_option">Line Chart</option>
+			</select>
+		</div>	
+		<div style="clear:left; position:relative; top:50px;">
+				<button class="btn" id="export_chart">Export</button>			
+				<button class="btn btn-primary" id="render_chart">Render</button>			
+		</div>
+	</div>
+</div>
+
+
+<!-- ################################################### Chart Region Start ################################################### -->
+<div style="position:relative; width:1200px; top:130px; left:10px; padding:10px; height:700px;">
+		<div id='chart'><svg style="width:95%; margin:0 auto; height:650px"></svg></div>
+</div>
+
+

@@ -1,0 +1,165 @@
+<script type = "text/javascript">
+
+$(document).ready(function(){
+
+    $('#data_warnings').hide()
+    $('#totalTableContainer').hide()
+
+    // Shows and Hides the Appropriate Tables
+    function displayAppropriateTables(){
+
+        var checkeIDS = new Array() 
+        $('input.display_numbers_check:checked').each(function () {
+          checkeIDS.push($(this).attr('id'))
+        })
+        var updateType = checkeIDS[0]
+
+        if(updateType == 'all_constraints'){
+          $('#applicableTables').show()
+          $('#allTables').hide()
+        }
+        else{
+          $('#applicableTables').hide()
+          $('#allTables').show()
+         }   
+    }
+
+    $('input.display_numbers_check').on('change', function() {
+        $('input.display_numbers_check').not(this).prop('checked', false); 
+        displayAppropriateTables()
+    });
+
+    // Add Click Handler for Generating Report
+    $('#export_pdf').on('click',function(){
+        getFile = $.ajax({
+            url:'generateLimitReportPDF/',
+             type: "GET",
+             success: function(response) {
+                var fileName = getFile.getResponseHeader('fileName')
+                var blob=new Blob([response]);
+                var link=document.createElement('a');
+                link.href=window.URL.createObjectURL(blob);
+                link.download=fileName
+                link.click();
+             }
+         })
+    })
+    //////////////////////////////////////////////////////////////////
+     /// Limit Report Generation //////////////////////////////////
+    $('#generateReport').on('click', function () {
+        // Get Workspace - If Valid - Generate Report
+        getWorkspace(function(port_id,port_name,fund_id,fund_name,snapshot_date,validity){
+            populateWorkspaceData(snapshot_date,validity)
+            // Get Portfolio Overview if Workspace is Valid
+            if(validity){
+
+                generateLimitReport(function(report_content){
+                    // Handle Error Report Data
+                    if(report_content['error']==false){
+                        var limit_report_data = report_content['limit_report_data']
+                        var error_report_details = report_content['error_report_details']
+                        drawLimitReports(limit_report_data)
+
+                        $('#export_pdf').prop('disabled',false) // Default
+                        $('#totalTableContainer').show()
+                        displayAppropriateTables()
+                        
+                    }
+                })
+            }
+            else{
+                alert('Workspace Date Invalid')
+            }
+        })
+    })
+
+    //////////////////////////////////////////////////////////////////
+    // Default Behavior on Page Load - Get last limit report in session if its there.
+    retrieveLimitReportData(function(report_content){
+        // Handle Error Report Data
+        if(report_content['error']==false){
+            var limit_report_data = report_content['limit_report_data']
+            var error_report_details = report_content['error_report_details']
+            drawLimitReports(limit_report_data)
+
+            $('#totalTableContainer').show()
+            displayAppropriateTables()
+            $('#export_pdf').prop('disabled',false) // Default
+        }
+        else{
+            // Nothing Stored
+            $('#totalTableContainer').hide()
+            $('#export_pdf').prop('disabled',true) // Default
+        }
+    })
+})
+
+
+////////////////////////////////////////////////////////
+// Makes call to back end to actually generate the limit report, it will return
+// the associated data.
+function generateLimitReport(callback){
+    $.ajax({
+        url:'generateLimitReport/',
+         type: "get",
+         success: function(response) {
+            report_content  = JSON.parse(response)['report_content']
+            callback(report_content)
+        }
+    })
+}
+////////////////////////////////////////////////////////
+// Doesnt regenerate the limit report but will get the data for the last 
+// generated limit report if available.
+function retrieveLimitReportData(callback){
+    $.ajax({
+        url:'retrieveLimitReportData/',
+         type: "get",
+         success: function(response) {
+            report_content  = JSON.parse(response)['report_content']
+            callback(report_content)
+        }
+    })
+}
+
+
+// Parses Data Report and Outputs Information Summarizing the Missing Securities for Given Portfolio
+function handle_data_report(error_data,draw_table){
+
+}
+
+
+
+
+</script>
+
+
+<!-- ################################################### Options and Warnings ################################################### -->
+<div class="row" style="position:relative; left:20px; height: 60px; width:1200px;">
+        
+        <div class="row" style="position:relative; left:10px; top:15px;">
+
+            <div class="col-md-10" style="font-family: 'Roboto', sans-serif; font-size:10px; font-weight: bold;">
+                <input class="display_numbers_check" type="checkbox" checked id="all_numbers">Show All Values<br>
+                <input class="display_numbers_check" type="checkbox" id="all_constraints"> Only Show Values with Relevant Constraints <br>
+            </div>
+
+            <div class="col-md-2" style="float:right">
+                <button style="position:relative; position:relative; height:30px;" class="btn btn-success" id="export_pdf">Export PDF</button>
+            </div>
+
+        </div>
+
+    <!-- ################## -->
+    <div id="data_warnings" class="col-md-8" style="position:relative; top:10px; left:-10px; width:700px;"></div>
+</div>
+
+
+<!-- ################################################### Table Region ################################################### -->
+<div id="totalTableContainer" class="row" style="height:1800px;">
+    <div class="row" id="applicableTables" style="position:relative; left:60px; top:10px;"></div>
+    <div class="row" id="allTables" style="position:relative; left:60px; top:10px;"></div>
+
+</div>
+
+

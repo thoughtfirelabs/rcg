@@ -1,0 +1,64 @@
+<script type = "text/javascript">
+$(document).ready(function(){
+    // Control for W2 Tabs
+    $("#my_limit_report_Tabs").w2destroy("my_limit_report_Tabs");
+    $(function () {
+        $('#my_limit_report_Tabs').addClass('small')
+        $('#my_limit_report_Tabs').w2tabs({
+
+            name :'my_limit_report_Tabs',
+            active :'limit_report_overview',
+            tabs    : [
+                { id: 'limit_report_overview', caption: 'Report Overview' },
+                { id: 'limit_report_details', caption: 'Manager Details' },
+            ],
+            onClick: function (event) {
+                delegate_limit_report_tab(event.target)
+            }
+        });
+    });
+    // Default Tab on Load
+    delegate_limit_report_tab('limit_report_overview')
+    loadFunds()
+})
+
+////////////////////////////////////
+function delegate_limit_report_tab(target){
+
+    url_dict = new Array()
+    url_dict['limit_report_overview']='/templates/reporting_level/limitReport/limit_report_general.html'
+    url_dict['limit_report_details']='/templates/reporting_level/limitReport/limit_report_details.html'
+    var targetDirect = url_dict[target]
+    
+    // Temporary Deprecation of Manager Details
+    if(target == 'limit_report_details'){
+        alert('Temporarily Deprecated - Under Construction')
+        return
+    }
+    $('#myLimitReportTabContent').empty()
+    $('#myLimitReportTabContent').load(targetDirect);
+}
+
+</script>
+
+<!-- ################################################### Generate Regiom ################################################### -->
+<div class="row" style="position:relative; top:10px; height:60px;">
+    <div class="col-md-3" style="position:relative; left:10px; width:300px; top:10px;">
+         <div class="row" style="position:relative; top:4px;">
+            <div class="col-md-6"><p>Select Fund:</p></div>
+            <div class="col-md-6"><select id="fund_select" style="height:25px; width:250px;"></select></div>
+         </div>
+    </div>
+
+    <div class="col-md-3" style="position:relative; left:130px; width:300px; top:10px;">
+        <button style="position:relative; position:relative; height:30px;" class="btn btn-primary" id="generateReport">Generate Limit Report</button>
+    </div>
+</div>
+
+<!-- ################################################### Exposure Menu Regiom ################################################### -->
+<div class="row-fluid" style="position:relative; top:20px;">
+    <!-- ################################################### Tab Content Region ################################################### -->
+    <div id="my_limit_report_Tabs"></div>
+    <div style="overflow:visible; position:relative; height:1200px; top:10px;"  id="myLimitReportTabContent" class="nav nav-tabs tab-content"></div>
+</div>
+

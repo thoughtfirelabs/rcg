@@ -1,0 +1,317 @@
+<script type = "text/javascript">
+//////////////////////////////////////////////////////////////////////////////////////
+$(document).ready(function(){
+
+    // Text Fields for Date Selections
+    $("#startDate").datepicker();
+    $("#endDate").datepicker();
+    $('#singleDate').datepicker()
+
+    // Checkbox and Enabled/Disabled Default States
+    handleTimeSelectionForTimeCheckbox('single_date')
+    disableTextField('startDate')
+    disableTextField('endDate')
+    disableTextField('singleDate')
+    $('#between_dates').attr('disabled',true)
+    $('#single_date').attr('disabled',true)
+
+
+    $('#modalContainer').remove() // Default case when clicking page, ensures modal not visible.
+    clearMissingSecurities()
+    
+    $('#findAllMissingSecurities').on('click', function () {
+
+          include_proxy_underlying = false // Default
+          analysisType = 'dates' // Default
+
+          // Determine if Proxies/Underlyings Should be Included
+          var chkd1 = $("input.includeProxiesUnderlyings:checkbox");
+          if(chkd1.is(':checked')){
+            include_proxy_underlying = true
+          }
+
+          // Determine Analysis Type from Check Boxes
+          var chkds = $("input.securityAnalysisTypeCheck:checkbox");
+          if(chkds.is(':checked')){
+            if($('#all').is(':checked')){
+              analysisType = 'all'
+            }
+          }
+          else{
+            alert('Error : Analysis Type Not Checked')
+            return
+          }
+
+          // Determine Whether or Not (If Applicable) Selected Dates are Valid
+          datesValid = true
+          // Not Over Date Range
+          if(analysisType != 'all'){
+              datesValid = vaildateDateSelection()
+
+              if(!datesValid){
+                alert('Invalid Date Selection')
+                return
+              }
+
+              // Get List of All Instrument Types from Local Storage
+              all_instrument_types = JSON.parse(localStorage.getItem('all_instrument_types'))
+              if(typeof(all_instrument_types) == "undefined"){
+                retrieveBaseData()
+                all_instrument_types = JSON.parse(localStorage.getItem('all_instrument_types')) // Might need to wait for above function to complete before proceeding
+              }
+
+              // Get Date Type (i.e. range or single date)
+              var checkeIDS = new Array() 
+              $('input.update_check:checked').each(function () {
+                checkeIDS.push($(this).attr('id'))
+              })
+              var dateUpdateType = checkeIDS[0]
+
+              endDate = $("#endDate").val()
+              startDate = $("#startDate").val()
+              singleDate = $("#singleDate").val()
+
+              // Get Missing Securities Over Date Range //////////////////////////////////////////////////////
+              getHoldingMissingSecurities(startDate,endDate,singleDate,dateUpdateType,include_proxy_underlying,function(missingSecurityData){
+                missingSecurities = JSON.parse(missingSecurityData)['missingSecurities']
+
+                clearMissingSecurities()
+
+                // Use Missing Security Data to Generate HTML
+                table = generateMissingSecurityHTML(missingSecurities,all_instrument_types)
+                table.addClass('missingSecuritiesTable')
+
+                $('#missingSecurities').width(1400)
+                $('#missingSecurities').append(table)
+
+              })
+              ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+          }
+          // Over Date Range
+          else{
+              if(!datesValid){
+                  alert('Invalid Date Selection')
+                  return
+              }
+
+              all_instrument_types = JSON.parse(localStorage.getItem('all_instrument_types'))
+              if(typeof(all_instrument_types) == "undefined"){
+                retrieveBaseData()
+              }
+              // Might need to wait for above function to complete before proceeding
+              all_instrument_types = JSON.parse(localStorage.getItem('all_instrument_types'))
+              
+             // Get Missing Securities //////////////////////////////////////////////////////
+             getAllMissingSecurities(include_proxy_underlying,function(missingSecurityData){
+                missingSecurities = JSON.parse(missingSecurityData)['missingSecurities']
+                
+                clearMissingSecurities()
+                
+                // Use Missing Security Data to Generate HTML
+                table = generateMissingSecurityHTML(missingSecurities,all_instrument_types)
+                table.addClass('missingSecuritiesTable')
+                
+                $('#missingSecurities').width(1400)
+                $('#missingSecurities').append(table)
+              })
+             //////////////////////////////////////////////////////////////////////////////////
+          }
+
+    })
+    // Determines, based no the checkbox selected, whether or not the required information is there for the dates
+    function vaildateDateSelection(){
+
+        var checkeIDS = new Array() 
+        $('input.update_check:checked').each(function () {
+          checkeIDS.push($(this).attr('id'))
+        })
+        var updateType = checkeIDS[0]
+        if(updateType=='single_date'){
+          var checkIds = ['singleDate']
+        }
+        else{
+          var checkIds = ['startDate','endDate']
+        }
+        // Check to make sure no information is missing
+        for(var i = 0; i<checkIds.length; i++){
+          val = $('#'+checkIds[i]).val()
+          if(typeof(val) == "undefined" || val=="") {
+            return false
+          }
+        }
+        return true
+    }
+    // Controls the appearance and enabled/disabled features of time selection depending on
+    // what time option checkbox is active.
+    function handleTimeSelectionForTimeCheckbox(checkID,disableCompletely){
+
+        //////// Completely Disable
+        if(typeof(disableCompletely) != "undefined" && disableCompletely){
+          disableTextField('startDate')
+          disableTextField('endDate')
+          disableTextField('singleDate')
+          $('#between_dates').attr('disabled',true)
+          $('#single_date').attr('disabled',true)
+        }
+        //////// Disable Portions Depending on Selection Type
+        else{
+          $('#between_dates').attr('disabled',false)
+          $('#single_date').attr('disabled',false)
+
+          if(checkID == 'single_date'){
+              disableTextField('startDate')
+              disableTextField('endDate')
+              enableTextField('singleDate')
+            }
+          else{
+              enableTextField('startDate')
+              enableTextField('endDate')
+              disableTextField('singleDate')
+           }   
+        }
+    }
+    // Controls the appearance and enabled/disabled features of tiem selection depending on
+    // what analysis checkbox is active.
+    function handleTimeSelectionForAnalysisCheckbox(checkID){
+
+        if(checkID=='all'){
+            // Completely Disable Time Selection
+            handleTimeSelectionForTimeCheckbox("",true)
+        }
+        else{
+          // Enable Time Selection Depending on Active Time Selection Checkbox
+          var checkeIDS = new Array() 
+          $('input.update_check:checked').each(function () {
+            checkeIDS.push($(this).attr('id'))
+          })
+          var updateType = checkeIDS[0]
+          handleTimeSelectionForTimeCheckbox(updateType)
+        }
+    }
+
+    /////////////// Button Click Handlers ///////////////
+    $('#saveAllMissingSecurities').on('click',function(){
+        saveAllMissingSecurity()
+    })
+    // Checkbox Handlers for Checkbox Options
+    $('input.update_check').on('change', function() {
+        $('input.update_check').not(this).prop('checked', false); 
+        var checkeIDS = new Array() 
+        $('input.update_check:checked').each(function () {
+          checkeIDS.push($(this).attr('id'))
+
+        })
+        var updateType = checkeIDS[0]
+        handleTimeSelectionForTimeCheckbox(updateType)
+    });
+
+    $('input.securityAnalysisTypeCheck').on('change', function() {
+        $('input.securityAnalysisTypeCheck').not(this).prop('checked', false);  
+
+        var checkeIDS = new Array() 
+        $('input.securityAnalysisTypeCheck:checked').each(function () {
+          checkeIDS.push($(this).attr('id'))
+        })
+        var updateType = checkeIDS[0]
+        handleTimeSelectionForAnalysisCheckbox(updateType)
+    });
+})
+</script>
+
+<!-- ################################################### Missing Securities ################################################### -->
+<div class="row" style="position:relative; left:15px; width:100%; margin-left:-10px; top:15px; min-height:150px;">
+
+          <div class="row-fluid">
+              <h2 style="font-size:16px">Find Missing Data<span style="color:#b92429">.</span></h2>
+          </div>
+          
+          <div class="row-fluid"></div>
+          <!-- ######################################################## -->
+          <div class="row-fluid" style="position:relative; width:1200px; top:15px;">
+
+               <div class="col-sm-3" style="font-family: 'Roboto', sans-serif; font-size:10px; width:260px; font-weight: bold;">
+                    <input class="securityAnalysisTypeCheck" checked type="checkbox" id="all">All Securities In Database<br>
+                    <input class="securityAnalysisTypeCheck" type="checkbox" id="dates"> Only Securities Held Over Relevant Dates <br>
+               </div>
+
+               <div class="col-sm-2" style="position:relative; top:-15px;">
+
+                  <button class="btn btn-secondary" id="findAllMissingSecurities" style="position:relative; top:5px; width:180px; height:40px;">     
+                      <div class="row">  
+                          <div class="col-md-3">        
+                              <div id="imagebtn_container" style="position:relative; bottom:4px;"><img src="/static/img/analyzeIcon.jpg" width="30" height="30"/></div>
+                          </div>
+                          <div class="col-md-9">
+                              <span style="position:relative; left:-8px; top:6px;">Analyze Missing Data</span>
+                          </div>
+                      </div>
+                  </button>
+
+              </div>
+
+              <div class="col-sm-2" style="position:relative; top:-15px;">
+
+                  <button disabled class="btn btn-secondary" id="saveAllMissingSecurities" style="position:relative; top:5px; width:160px; height:40px;">     
+                    <div class="row">  
+                        <div class="col-md-3">        
+                            <div id="imagebtn_container" style="position:relative; bottom:4px;"><img src="/static/img/saveIcon.png" width="30" height="30"/></div>
+                        </div>
+                        <div class="col-md-9">
+                            <span style="position:relative; left:-8px; top:6px;">Save All Securities</span>
+                        </div>
+                    </div>
+                 </button>
+
+              </div>
+        </div>
+        <!-- ################### Column 1 ######################### -->
+        <div class="row-fluid" style="position:relative; width:1200px; left:15px; top:15px;">
+            
+                  <div class="row" style="position:relative; width:800px; top:25px;">
+                      <div class="col-lg-4" style="font-family: 'Roboto', sans-serif; font-size:10px; font-weight: bold;">
+                            <input class="update_check" type="checkbox" id="between_dates">Range of Dates<br>
+                            <input class="update_check" type="checkbox" checked id="single_date"> Single Date <br>
+                      </div>
+                      <div class="col-lg-4" style="font-family: 'Roboto', sans-serif; font-size:10px; font-weight: bold;">
+                            <input class="includeProxiesUnderlyings" class="update_check" type="checkbox" id="between_dates" checked>Include Missing References to Proxies and Underlyings<br>
+                      </div>
+
+                  </div>
+
+                  <!-- ######################################################## -->
+                  <div class="row" style="position:relative; width:180px; top:35px;">
+
+                      <!-- ######################################################## -->
+                        <div id = "holding_date_range" style="position:relative; left:30px; top:10px;">
+
+                            <div class="row">
+                                
+                                <!-- ######################################################## -->
+                                <div class="row">
+                                    <div class="col-md-6"><p>Start Date:</p></div>
+                                    <div class="col-md-6"><input readonly style="background-color:#FFFFFF" type="text" id="startDate"></input></div>
+                                </div>
+
+                                <!-- ######################################################## -->
+                                <div class="row" style="position:relative; top:10px;">
+                                    <div class="col-md-6"><p>End Date:</p></div>
+                                    <div class="col-md-6"><input readonly style="background-color:#FFFFFF" type="text" id="endDate"></input></div>
+                                </div>
+
+                                <!-- ######################################################## -->
+                                <div class="row" style="position:relative; top:20px;">
+                                    <div class="col-md-6"><p>Single Date:</p></div>
+                                    <div class="col-md-6"><input readonly style="background-color:#FFFFFF" type="text" id="singleDate"></input></div>
+                                </div>
+
+                            </div>
+                        
+                        </div>
+                  
+                  </div>
+            
+      </div>
+      <!-- ################################################### Missing Securities Region ################################################### -->
+      <div class="row" id="missingSecurities" style="position:relative; height:1000px; width:1200px; top:110px; left:30px;"></div>
+
+</div>

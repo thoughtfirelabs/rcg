@@ -1,0 +1,60 @@
+.action{
+	color:#6B90DA;
+	font-size:0.8em;
+	text-decoration:underline;
+	cursor:pointer;
+}
+
+.mgrlink{
+	cursor:pointer;
+	background-color:#EBEFF9;
+	list-style-type:none;
+}
+.mgrlink:hover{
+	background-color:#DDE5F9;
+}
+
+.link{
+	cursor:pointer;
+	background-color:#EBEFF9;
+	list-style-type:none;
+	font-size:0.8em;
+}
+.link:hover{
+	background-color:#DDE5F9;
+}
+
+.selectedlink{
+	cursor:pointer;
+	background-color:#DDE5F9 !important;
+	list-style-type:none;
+	font-size:0.8em;
+}
+
+.errormsg{
+	color:red;
+	font-size:0.8em;
+}
+
+.strategy{
+	font-size:0.8em;
+}
+
+.breakdown{
+	font-size:0.8em;
+}
+.subtotal{
+	font-weight:bold;
+	background-color:green;
+}
+.total{
+	font-weight:bold;
+	background-color:red;
+}
+
+#mgrsearchbox{
+	position:absolute;
+	padding: 20px 20px 20px 20px;
+	height:400px;
+	width: 550px;
+}

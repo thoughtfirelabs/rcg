@@ -1,0 +1,467 @@
+<script type = "text/javascript">
+
+//////////////////////////////////////////////////////////////////////////////////////
+$(document).ready(function(){
+
+    // Close Handler - Everything else handled by bootstrap
+    $('#modalClose').on('click',function(){
+      $('#modalContainer').remove()
+    })
+
+    // Initialize State of Suppressable Text Fields
+    var suppressableTextFields = ['editSecurityModalCountryName','editSecurityModalTicker','editSecurityModalSectorName','editSecurityModalIndustryName']
+    for(var i = 0; i<suppressableTextFields.length; i++){
+      $('#'+suppressableTextFields[i]).prop('readonly',false)
+    }
+
+    // Button Click Handlers for Suppress Buttons
+    $('.suppressButton').on('click',function(){
+
+      // Check if field suppressed or unsuppressed
+      var buttonFieldLookup = new Object()
+      buttonFieldLookup.country = $('#editSecurityModalCountryName')
+      buttonFieldLookup.cntry_of_risk = $('#editSecurityModalCountryOfRisk')
+      buttonFieldLookup.industry = $('#editSecurityModalIndustryName')
+      buttonFieldLookup.sector = $('#editSecurityModalSectorName')
+
+      var textField = buttonFieldLookup[$(this).attr('id')]
+      var suppressed = textField.hasClass('suppressed')
+
+      securityID = localStorage.getItem('activeSecurity')
+      fieldName = $(this).attr('id')
+
+      // Unruppress if Suppressed
+      if(suppressed){
+          // UnSupppress field and Repopulate Details
+          unsuppressField(securityID,fieldName,function(securityDetails){
+              populateEditSecurityModal(securityDetails)
+          })
+      }
+      // Suppress if Unsuppressed
+      else {
+          // Supppress field and Repopulate Details
+          suppressField(securityID,fieldName,function(securityDetails){
+              populateEditSecurityModal(securityDetails)
+          })
+      }
+
+      
+    })
+    /////////////// Save Handler
+    $('#saveEditSecurityModalData').on('click',function(){
+          var updatedData = retrieveEditSecurityModalData()
+          securityID = $('#selectedSecurityID').val()
+          saveSecurityData(securityID,updatedData,function(){
+              // Update Security in Table
+              updateSecurityInTable(securityID,function(){
+                $('#modalContainer').remove() // Close Modal
+              })
+          })
+    })
+    // /////////////// Remove Proxy Handler
+    // $('#editSecurityModalRemoveProxy').on('click',function(){
+    //     // Get Security ID from Local Storage
+    //     securityID = localStorage.getItem('activeSecurity')
+
+    //     if(typeof(securityID)=="undefined"){
+    //       alert('Error : No security ID stored in browser memory.')
+    //       return
+    //     }
+    //     removeProxy(securityID,function(security_details){
+
+    //         updateSecurityInTableWithDetails(securityID,security_details,function(){
+    //           populateEditSecurityModal(security_details)
+    //         })
+    //     })
+    // })
+    // /////////////// Remove Underlying Handler
+    // $('#editSecurityModalRemoveUnderlying').on('click',function(){
+    //     // Get Security ID from Local Storage
+    //     securityID = localStorage.getItem('activeSecurity')
+
+    //     if(typeof(securityID)=="undefined"){
+    //       alert('Error : No security ID stored in browser memory.')
+    //       return
+    //     }
+    //     removeUnderlying(securityID,function(security_details){
+
+    //         updateSecurityInTableWithDetails(securityID,security_details,function(){
+    //           populateEditSecurityModal(security_details)
+    //         })
+    //     })
+    // })
+})
+
+////////////////////////////////////////////////////////
+// Functions to remove or update proxies or underlyings for a specific security.
+function removeProxy(securityID,callback){
+
+  $.ajax({
+        url: '/removeProxy/',
+        type: "get",
+        data: {'security_id':securityID},
+        success: function(response) {
+          var security_details = JSON.parse(response)['security_details']
+          callback(security_details)
+        }
+    })
+}
+
+///////////
+function removeUnderlying(securityID,callback){
+
+  $.ajax({
+        url: '/removeUnderlying/',
+        type: "get",
+        data: {'security_id':securityID},
+        success: function(response) {
+          var security_details = JSON.parse(response)['security_details']
+          callback(security_details)
+        }
+    })
+}
+/////////////////////////////////////////////////////////////////////////////
+// Gives text fields and drop downs the suppression styling/appearance, making it readonly.
+function suppressTextField(textField){
+  textField.val('Suppress')
+  textField.prop('readonly',true)
+  textField.addClass('suppressed')
+  textField.css({'background-color':'#D3D3D3','text-color':'black'})
+}
+// Removes suppression appearance from the text field.
+function unsuppressTextField(textField){
+
+  textField.val('')
+  textField.prop('readonly',false)
+  textField.removeClass('suppressed')
+  textField.css({'background-color':'white'})
+}
+
+function suppressDropDown(dropdown){
+  dropdown.val('Suppress')
+  dropdown.prop('disabled',true)
+  dropdown.addClass('suppressed')
+  dropdown.css({'background-color':'#D3D3D3','text-color':'black'})
+}
+// Removes suppression appearance from the drop down
+function unsuppressDropDown(dropdown){
+
+  dropdown.val('')
+  dropdown.prop('disabled',false)
+  dropdown.removeClass('suppressed')
+  dropdown.css({'background-color':'white'})
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Populate Data in Modal - Can pass in missing all_instrument_types if not worried
+// about repopulating the drop down menu.
+function populateEditSecurityModal(security_details){
+  if(typeof(security_details['error']) != "undefined"){
+    alert(security_details['error'])
+    return
+  }
+
+  //Dropdown Fields //////////////////////
+  all_instrument_types = JSON.parse(localStorage.getItem('all_instrument_types'))
+  if(typeof(all_instrument_types) == "undefined"){
+    retrieveBaseData()
+  }
+  all_sectors = JSON.parse(localStorage.getItem('all_sectors'))
+  if(typeof(all_sectors) == "undefined"){
+    retrieveBaseData()
+  }
+  all_country_names = JSON.parse(localStorage.getItem('all_country_names'))
+  if(typeof(all_country_names) == "undefined"){
+    retrieveBaseData()
+  }
+  all_country_codes = JSON.parse(localStorage.getItem('all_country_codes'))
+  if(typeof(all_country_codes) == "undefined"){
+    retrieveBaseData()
+  }
+
+  $('#editSecurityModalInstrumentSelect option').remove()
+  $.each(all_instrument_types, function(key,value) {
+      $('#editSecurityModalInstrumentSelect').append($("<option></option>").attr("value",value).text(value));
+  });
+  $('#editSecurityModalCountryOfRisk option').remove()
+  $.each(all_country_codes, function(key,value) {
+      $('#editSecurityModalCountryOfRisk').append($("<option></option>").attr("value",value).text(value));
+  });
+
+  $('#editSecurityModalCountryName option').remove()
+  $.each(all_country_names, function(key,value) {
+        $('#editSecurityModalCountryName').append($("<option></option>").attr("value",value).text(value));
+  });
+
+  $('#editSecurityModalSectorName option').remove()
+  $.each(all_sectors, function(key,value) {
+        $('#editSecurityModalSectorName').append($("<option></option>").attr("value",value).text(value));
+  });
+  
+  // Parse through data and populate the modal ///////////////////
+  if(typeof(security_details['instrument_type']) != 'undefined'){
+    $('#editSecurityModalInstrumentSelect').val(security_details['instrument_type'])
+  }
+
+  //Unsuppressable Fields //////////////////////
+  var unsuppressableFields = ['security_name','search_name','country','asset_class','region','rcgCustomAssetClass','rcgCustomInstrument','rcg_geo_bucket','market_tp']
+  var unsuppressableDestinations = ['editSecurityModalSecurityName','editSecurityModalTicker','editSecurityModalCountry','editSecurityModalAssetClass',
+                                    'editSecurityModalRegion','editSecurityModalRCGCustomAssetClass','editSecurityModalRCGCustomInstrument','editSecurityModalRCGGeoBucket','editSecurityModalMarketType']
+  // Default
+  for(var i = 0; i<unsuppressableDestinations.length; i++){
+    $('#'+unsuppressableDestinations[i]).val('') // Default
+    // Set Data Values
+    if(typeof(security_details[unsuppressableFields[i]]) != 'undefined'){
+      $('#'+unsuppressableDestinations[i]).val(security_details[unsuppressableFields[i]])
+    }
+  }
+
+  //Suppressable Fields //////////////////////
+  var suppressableFields = ['issuer','country_full_name','cntry_of_risk','industry','sector']
+  var suppressableDestinations = ['editSecurityModalIssuer','editSecurityModalCountryName','editSecurityModalCountryOfRisk',
+                                    'editSecurityModalIndustryName','editSecurityModalSectorName']
+
+  for(var i = 0; i<suppressableDestinations.length; i++){
+
+    fieldName = suppressableFields[i]
+    field = $('#'+suppressableDestinations[i])
+    button = $('.suppressButton#'+suppressableFields[i])
+
+    // Dropdown or Text Field
+    var dropdown = false
+    if(suppressableDestinations[i]=='editSecurityModalSectorName'){
+        dropdown = true
+    }
+    // Default is Unsuppressed and Empty //////////////
+    button.html('<u style="color:blue">Suppress</u>') // Suppress Option for Buttons
+    if(dropdown){
+      unsuppressDropDown(field) // Dropdowns 
+    }
+    // Normal Text Fields
+    else {
+      unsuppressTextField(field)
+    }
+    // Check if Suppressed and if Value Valid
+    if(typeof(security_details[fieldName]) != 'undefined'){
+
+        // Check for suppression
+        if(security_details[fieldName].toLowerCase() == 'suppress'){
+          button.html('<u style="color:blue">Unsuppress</u>') // Change Suppress Button to Unsuppress
+          if(dropdown){suppressDropDown(field)}
+          else{suppressTextField(field)}
+        }
+        else{
+          //Button Already Unsuppressed
+          field.val(security_details[fieldName])
+        }
+
+    }
+  }
+
+}
+
+// Retrieve Data From Modal
+function retrieveEditSecurityModalData(){
+
+  var data = new Object()
+  var fields = ['editSecurityModalInstrumentSelect','editSecurityModalSecurityName','editSecurityModalTicker','editSecurityModalSectorName','editSecurityModalIndustryName','editSecurityModalCountryName','editSecurityModalCountryOfRisk','editSecurityModalUnderlyingID','editSecurityModalProxyID']
+  var destinations = ['instrument_type','security_name','search_name','gics_sector_name','bics_level_3_industry_name','country_full_name','cntry_of_risk','underlying_rcg_id','proxy_rcg_id']
+
+  for(var i = 0; i<fields.length; i++){
+      var fieldElement = $('#'+fields[i])
+      if(fieldElement.val() != 'undefined' && fieldElement.val() != 'None'){
+        data[destinations[i]]=fieldElement.val()
+      }
+  }
+  return data
+}
+</script>
+
+
+
+<!-- Modal -->
+  <div id="myModalContent" name="editSecurityModal" style="margin:0;" class="modal-dialog">
+    <!-- Modal content-->
+    <div class="modal-content" style="position:absolute; left:0px; width:360px; margin:20px; display: inline-block;">
+          
+          <div class="row-fluid">
+              <h2 class="modalTitle" style="float:left;">Edit<span style="color:#b92429">.</span></h2>
+              <button type="button" class="btn btn-failure" id="modalClose" style="float:right; font-size:16px;" data-dismiss="modal">&times;</button>
+          </div>
+
+          <form style="position:relative; top:2px;">
+
+            <!-- #################################################################################### -->
+            <div class="form-group">
+
+                <div class = "row" style="margin:0;"><hr style="position:relative; top:4px;"></hr></div>
+                <div class = "row" style="margin:0;"><h5 class = "modalHeader" style="float:left;">General<span style="color:#b92429">.</span></h5></div>
+                <div class = "row" style="height:9px;"></div>
+
+                <div class = "row" style="margin:0;">
+                    <label for="editSecurityModalSecurityName">Security Name</label>
+                    <input type="text" class="form-control" aria-describedby="securityNameHelp" id="editSecurityModalSecurityName" placeholder="Issuer Missing">
+                    <small id="securityNameHelp" class="form-text text-muted"><p style="color:blue">Required.</p></small>
+
+                </div>
+
+                <div class = "row">
+                    <div class = "col-md-6">
+                      <label for="editSecurityModalIssuer">Issuer</label>
+                        <input type="text" class="form-control" id="editSecurityModalIssuer" placeholder="Issuer Missing">
+                        <div class = "row">
+                            <div class = "col-md-6"></div>
+                            <div class = "col-md-6">
+                                <button type="button" class="suppressButton" id = "issuer" style="position:relative; top:5px; float:right; background:none; border:none; margin:0; padding:0;"><u style="color:blue">Suppress</u></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class = "col-md-6">
+                         <label for="editSecurityModalTicker">Ticker</label>
+                         <input type="text" class="form-control" id="editSecurityModalTicker" placeholder="Ticker Missing">
+                    </div>
+                </div>
+
+            </div>
+            <!-- #################################################################################### -->
+
+            <!-- #################################################################################### -->
+            <div class="form-group">
+
+                <div class = "row" style="margin:0;"><hr style="position:relative; top:4px;"></hr></div>
+                <div class = "row" style="margin:0;"><h5 class = "modalHeader" style="float:left;">Security Classification<span style="color:#b92429">.</span></h5></div>
+                <div class = "row" style="height:9px;"></div>
+
+                <div class = "row">
+                  <div class = "col-md-6">
+                        <label for="editSecurityModalInstrumentSelect">Instrument</label>
+                        <select style="width:95%; background-color:#FFFFFF"  aria-describedby="instrumentHelp" id="editSecurityModalInstrumentSelect">
+                            <option selected="selected">None</option>
+                        </select>
+                        <small style="color:blue" id="instrumentHelp" class="form-text text-muted"><p style="color:blue">Required.</p></small>
+                  </div>
+        
+                  <div class = "col-md-6">
+                      <label for="editSecurityModalAssetClass">Asset Class</label>
+                      <input type="text" class="form-control" id="editSecurityModalAssetClass" placeholder="">
+                  </div>
+                </div>
+
+                <div class = "row">
+                  <div class = "col-md-6">
+                    <label for="editSecurityModalCountryName">RCG Custom Asset Class</label>
+                    <input readonly type="text" style="background-color:#D3D3D3" class="form-control" aria-describedby="customAClassHelp" id="editSecurityModalRCGCustomAssetClass" placeholder="No Classification">
+                    <small style="color:blue" id="customAClassHelp" class="form-text text-muted"><p style="color:blue">Derived.</p></small>
+                  </div>
+        
+                  <div class = "col-md-6">
+                      <label for="editSecurityModalCountryOfRisk">RCG Custom Instrument</label>
+                      <input readonly type="text" style="background-color:#D3D3D3" class="form-control" aria-describedby="customIHelp" id="editSecurityModalRCGCustomInstrument" placeholder="No Classification">
+                      <small style="color:blue" id="customIHelp" class="form-text text-muted"><p style="color:blue">Derived.</p></small>
+                  </div>
+                </div>
+
+            </div>
+            <!-- #################################################################################### -->
+
+
+            <!-- #################################################################################### -->
+            <div class="form-group">
+
+                <div class = "row" style="margin:0;"><hr style="position:relative; top:0px;"></hr></div>
+                <div class = "row" style="margin:0;"><h5 class = "modalHeader" style="float:left;">Geography<span style="color:#b92429">.</span></h5></div>
+                <div class = "row" style="height:9px;"></div>
+
+                <div class = "row">
+                    <div class = "col-md-6">
+                      <label for="editSecurityModalCountryName">Country Full Name</label>
+                      <select style="width:95%; background-color:#FFFFFF" id="editSecurityModalCountryName">
+                            <option selected="selected">None</option>
+                      </select>
+                      <div class = "row">
+                            <div class = "col-md-6"></div>
+                            <div class = "col-md-6">
+                                <button type="button" class="suppressButton" id = "country_full_name" style="position:relative; top:5px; float:right; background:none; border:none; margin:0; padding:0;"><u style="color:blue">Suppress</u></button>
+                            </div>
+                        </div>
+                    </div>
+          
+                    <div class = "col-md-6">
+                        <label for="editSecurityModalCountryOfRisk">Country of Risk</label>
+                        <select style="width:95%; background-color:#FFFFFF" id="editSecurityModalCountryOfRisk">
+                            <option selected="selected">None</option>
+                       </select>
+                        <div class = "row">
+                            <div class = "col-md-6"></div>
+                            <div class = "col-md-6">
+                                <button type="button" class="suppressButton" id = "cntry_of_risk" style="position:relative; top:5px; float:right; background:none; border:none; margin:0; padding:0;"><u style="color:blue">Suppress</u></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class = "row">
+                    <div class = "col-md-6">
+                      <label for="editSecurityModalCountry">Country</label>
+                      <input readonly type="text" style="background-color:#D3D3D3" class="form-control" aria-describedby="countryHelp" id="editSecurityModalCountry" placeholder="No Classification">
+                      <small style="color:blue" id="countryHelp" class="form-text text-muted"><p style="color:blue">Derived.</p></small>
+                    </div>
+          
+                    <div class = "col-md-6">
+                        <label for="editSecurityModalRegion">Region</label>
+                        <input readonly type="text" style="background-color:#D3D3D3" class="form-control" aria-describedby="regionHelp" id="editSecurityModalRegion" placeholder="No Classification">
+                        <small style="color:blue" id="regionHelp" class="form-text text-muted"><p style="color:blue">Derived.</p></small>
+                    </div>
+                </div>
+
+                <div class = "row">
+                    <div class = "col-md-6">
+                      <label for="editSecurityModalRCGGeoBucket">RCG Geo Bucket</label>
+                      <input readonly type="text" style="background-color:#D3D3D3" class="form-control" aria-describedby="rcgGeoBucketHelp" id="editSecurityModalRCGGeoBucket" placeholder="No Classification">
+                      <small style="color:blue" id="rcgGeoBucketHelp" class="form-text text-muted"><p style="color:blue">Derived.</p></small>
+                    </div>
+          
+                    <div class = "col-md-6">
+                      <label for="editSecurityModalMarketType">Market Type</label>
+                      <input readonly type="text" style="background-color:#D3D3D3" class="form-control" aria-describedby="rcgMarketTypeHelp" id="editSecurityModalMarketType" placeholder="No Classification">
+                      <small style="color:blue" id="rcgMarketTypeHelp" class="form-text text-muted"><p style="color:blue">Derived.</p></small>
+                    </div>
+                </div>
+
+          </div>
+          <!-- #################################################################################### -->
+          <div class="form-group">
+
+                <div class = "row" style="margin:0;"><hr style="position:relative; top:0px;"></hr></div>
+                <div class = "row" style="margin:0;"><h5 class = "modalHeader" style="float:left;">Sector/Industry<span style="color:#b92429">.</span></h5></div>
+                <div class = "row" style="height:9px;"></div>
+
+                <div class = "row">
+                  <div class = "col-md-6">
+                    <label for="editSecurityModalIndustryName">BICS 3 Industry Name</label>
+                    <input type="text" class="form-control" id="editSecurityModalIndustryName" placeholder="">
+                    <button type="button" class="suppressButton" id = "industry" style="position:relative; top:5px; float:right; background:none; border:none; margin:0; padding:0;"><u style="color:blue">Suppress</u></button>
+                  </div>
+        
+                  <div class = "col-md-6">
+                      <label for="editSecurityModalSectorName">GICS Sector Name</label>
+                      <select style="width:95%; background-color:#FFFFFF"  id="editSecurityModalSectorName">
+                          <option selected="selected">None</option>
+                      </select>
+                      <button type="button" class="suppressButton" id = "sector" style="position:relative; top:5px; float:right; background:none; border:none; margin:0; padding:0;"><u style="color:blue">Suppress</u></button>
+                  </div>
+                </div>
+
+          </div>
+          <!-- #################################################################################### -->
+            <div style="margin:0" class = "row">
+              <button type="button" style="float:left; position:relative; bottom:-30px;" id="reclassifyEditSecurityModalData" class="btn btn-warning">Reclassify</button> 
+              <button type="button" style="float:right; position:relative; bottom:-30px;" id="saveEditSecurityModalData" class="btn btn-primary">Save</button> 
+            </div>
+
+          </form>
+      </div>
+
+  </div>
+
+

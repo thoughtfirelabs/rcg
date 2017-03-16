@@ -1,0 +1,103 @@
+<script type = "text/javascript">
+
+//////////////////////////////////////////////////////////////////////////////////////
+$(document).ready(function(){
+    $('#downloadStatic').on('click',function(){
+        downloadStatic()
+    })
+    $('#rewriteStatic').on('click',function(){
+        rewriteStatic()
+    })
+    $('#cleanupProxyUnderlying').on('click', function () {
+        cleanupProxyUnderlying()
+    })
+})
+//////////////////////////////////////////////////////
+function cleanupProxyUnderlying(){
+
+  $.ajax({
+      type: "GET",
+      url: '/cleanupProxiesUnderlyings/',
+      error: function(data){
+        alert("Unknown Error");
+      },
+      success: function(response){
+        alert(response)
+      }
+    })
+}
+//////////////////////////////////////////////////////
+// Rewrites thes static database by accessing the Static Master Excel file stored
+// in the J Drive
+function rewriteStatic(){
+
+  $.ajax({
+      type: "GET",
+      url: '/updateStatic/',
+      data:{'command':'rewrite'},
+      error: function(data){
+        alert("Unknown Error");
+      },
+      success: function(response){
+        alert(response)
+      }
+    })
+}
+//////////////////////////////////////////////////////
+// Downloads the current static master database in the formatted CSV file
+function downloadStatic(){
+
+   getFile =  $.ajax({
+          type: "GET",
+          url: '/updateStatic/',
+          data:{'command':'download'},
+
+          error: function(data){
+            alert("Unknown Error");
+          },
+
+          success: function(response){
+            
+            var fileName = getFile.getResponseHeader('fileName')
+            var blob=new Blob([response]);
+            var link=document.createElement('a');
+            link.href=window.URL.createObjectURL(blob);
+            link.download=fileName
+            link.click();
+        }
+     })
+}
+</script>
+
+<!-- ################################################### Admin Region ################################################### -->
+<div class="row" style="position:relative; left:15px; width:100%; margin-left:-10px; top:15px;">
+    <div class="col-md-12"> 
+
+
+        <div class="col-md-3" style="width:290px;">
+
+            <div class="row">
+
+              <div class="row">
+                  <h2 style="font-size:16px">Admin<span style="color:#b92429">.</span></h2>
+              </div>
+
+              <div class="row">
+                  <button id="cleanupProxyUnderlying" style="position:relative; top:20px; width:180px; height:20px;"> Cleanup Proxies/Underlyings </button>
+              </div>
+
+              <div class="row">
+                  <button id="downloadStatic" style="position:relative; top:35px; width:180px; height:20px;"> Download Static Master </button>
+              </div>
+
+              <div class="row">
+                  <button disabled id="rewriteStatic" style="position:relative; top:50px; width:180px; height:20px;"> Rewrite Static Master </button>
+              </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
